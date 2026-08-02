@@ -87,6 +87,40 @@ router.post("/verify", verifyLimiter, async (req, res) => {
   }
 });
 
+// Cobre quem clica no link do e-mail (Supabase valida com ele mesmo e
+// redireciona de volta com um access_token no fragmento da URL) em vez
+// de digitar o codigo. O token vem do proprio Supabase Auth - so
+// confirmamos que ele e valido e pertence a um e-mail com assinatura
+// ativa antes de abrir nossa propria sessao.
+router.post("/session-from-token", verifyLimiter, async (req, res) => {
+  const accessToken = String(req.body?.access_token || "");
+  if (!accessToken) {
+    return res.status(400).json({ error: "Token ausente." });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
+    if (error || !data?.user?.email) {
+      return res.status(401).json({ error: "Token invalido ou expirado." });
+    }
+    const email = data.user.email.toLowerCase();
+
+    const { data: status } = await supabaseAdmin.rpc("get_subscriber_status", {
+      p_email: email,
+    });
+
+    if (status !== "active") {
+      return res.status(401).json({ error: "Assinatura nao encontrada ou inativa." });
+    }
+
+    issueSession(res, email);
+    return res.json({ message: "Login realizado com sucesso." });
+  } catch (err) {
+    console.error("Erro ao validar token de sessao:", err.message);
+    return res.status(500).json({ error: "Erro ao validar token." });
+  }
+});
+
 router.post("/logout", (req, res) => {
   clearSession(res);
   res.json({ message: "Sessao encerrada." });

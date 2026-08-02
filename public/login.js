@@ -7,6 +7,29 @@ const codeInput = document.getElementById("code");
 
 let currentEmail = "";
 
+// Quem clica no link do e-mail (em vez de digitar o codigo) e
+// redirecionado de volta pra ca pelo proprio Supabase, com um
+// access_token no fragmento da URL (#access_token=...). Detectamos
+// isso e completamos o login por esse caminho tambem.
+(async function handleMagicLinkRedirect() {
+  const hash = window.location.hash;
+  if (!hash.includes("access_token=")) return;
+
+  const params = new URLSearchParams(hash.slice(1));
+  const accessToken = params.get("access_token");
+  history.replaceState(null, "", window.location.pathname);
+  if (!accessToken) return;
+
+  status.textContent = "Confirmando login...";
+  try {
+    await postJson("/api/auth/session-from-token", { access_token: accessToken });
+    status.textContent = "Login realizado! Redirecionando...";
+    window.location.href = "/";
+  } catch (err) {
+    status.textContent = err.message;
+  }
+})();
+
 async function postJson(url, body) {
   const resp = await fetch(url, {
     method: "POST",
