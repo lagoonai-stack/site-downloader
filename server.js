@@ -15,6 +15,11 @@ import { requireActiveSubscriber } from "./requireActiveSubscriber.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
+// Atras do proxy reverso do Dokploy (Traefik): confia so no primeiro
+// hop pra pegar o IP real do cliente via X-Forwarded-For, sem o que
+// o rate-limit (por IP) nao consegue identificar os visitantes direito.
+app.set("trust proxy", 1);
+
 app.use(helmet());
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
