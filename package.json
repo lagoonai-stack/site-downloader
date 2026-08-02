@@ -1,0 +1,25 @@
+{
+  "name": "site-downloader",
+  "version": "1.0.0",
+  "description": "Baixa HTML, CSS, JS e imagens de uma página a partir da URL",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "archiver": "^7.0.1",
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.1",
+    "express-rate-limit": "^8.6.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^23.6.0"
+  }
+}

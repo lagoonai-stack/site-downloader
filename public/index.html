@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Downloader</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a; color: #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; margin: 0; padding: 20px;
+    }
+    .card {
+      background: #1e293b; padding: 32px; border-radius: 16px;
+      width: 100%; max-width: 480px; box-shadow: 0 20px 50px rgba(0,0,0,.4);
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    p.sub { margin: 0 0 24px; color: #94a3b8; font-size: 14px; }
+    input {
+      width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155;
+      background: #0f172a; color: #e2e8f0; font-size: 15px; margin-bottom: 14px;
+    }
+    label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; margin-bottom: 18px; }
+    button {
+      width: 100%; padding: 14px; border: none; border-radius: 10px;
+      background: #6366f1; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #4f46e5; }
+    .status { margin-top: 16px; font-size: 14px; min-height: 20px; }
+    .topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+    .logout {
+      width: auto; background: none; color: #94a3b8; font-size: 13px;
+      padding: 4px 8px; text-decoration: underline;
+    }
+    .logout:hover { color: #e2e8f0; background: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="topbar">
+      <button class="logout" id="btnLogout">Sair</button>
+    </div>
+    <h1>Site Downloader</h1>
+    <p class="sub">Informe a URL e baixe HTML, CSS, JS e imagens em um .zip</p>
+    <input id="url" type="url" placeholder="https://exemplo.com" />
+    <label>
+      <input id="spa" type="checkbox" />
+      Site em React/Vue/SPA? (renderiza com Puppeteer, mais lento)
+    </label>
+    <button id="btn">Baixar site</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
