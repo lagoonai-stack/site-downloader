@@ -34,6 +34,9 @@ app.get("/login.html", (req, res) =>
 app.get("/login.js", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "login.js"))
 );
+app.get("/styles.css", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "styles.css"))
+);
 
 app.use(requireActiveSubscriber);
 
