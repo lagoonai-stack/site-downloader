@@ -7,6 +7,9 @@ import * as cheerio from "cheerio";
 import archiver from "archiver";
 import { fileURLToPath } from "url";
 import path from "path";
+import { promises as fsp } from "fs";
+import os from "os";
+import { build as esbuildBuild } from "esbuild";
 
 import authRoutes from "./authRoutes.js";
 import kiwifyWebhook from "./kiwifyWebhook.js";
@@ -96,6 +99,67 @@ function localName(resUrl, folder, seen) {
   return final;
 }
 
+// Reescreve cada <script type="module" src="..."> como um bundle unico
+// em formato classico (iife), resolvendo os imports a partir dos arquivos
+// ja baixados em disco. O que for absorvido pelo bundle sai da lista de
+// resultados; o resto (CSS, imagens, JS nao-modulo) continua igual.
+async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, results }) {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "site-downloader-"));
+  try {
+    for (const r of results) {
+      if (!r.buf) continue;
+      const dest = path.join(tempDir, r.local);
+      await fsp.mkdir(path.dirname(dest), { recursive: true });
+      await fsp.writeFile(dest, r.buf);
+    }
+
+    const absorbed = new Set();
+    const bundles = [];
+
+    for (const [i, { el, local }] of moduleEntries.entries()) {
+      const entryPath = path.join(tempDir, local);
+      const bundleLocal = `js/bundle-${i}.js`;
+      const outPath = path.join(tempDir, bundleLocal);
+
+      await esbuildBuild({
+        entryPoints: [entryPath],
+        bundle: true,
+        format: "iife",
+        outfile: outPath,
+        absWorkingDir: tempDir,
+        logLevel: "silent",
+        loader: {
+          ".png": "dataurl",
+          ".jpg": "dataurl",
+          ".jpeg": "dataurl",
+          ".gif": "dataurl",
+          ".svg": "dataurl",
+          ".webp": "dataurl",
+          ".woff": "dataurl",
+          ".woff2": "dataurl",
+          ".ttf": "dataurl",
+          ".otf": "dataurl",
+          ".css": "empty",
+        },
+      });
+
+      bundles.push({ local: bundleLocal, buf: await fsp.readFile(outPath) });
+      absorbed.add(local);
+      $(el).removeAttr("type");
+      $(el).attr("src", bundleLocal);
+    }
+
+    for (const { el, local } of modulePreloadChunks) {
+      $(el).remove();
+      absorbed.add(local);
+    }
+
+    return [...results.filter((r) => !absorbed.has(r.local)), ...bundles];
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true });
+  }
+}
+
 app.get("/download", async (req, res) => {
   const target = req.query.url;
   const useSpa = req.query.spa === "1";
@@ -125,6 +189,7 @@ app.get("/download", async (req, res) => {
     });
 
     // JS
+    const moduleEntries = [];
     $("script[src]").each((_, el) => {
       const src = $(el).attr("src");
       if (!src) return;
@@ -132,10 +197,14 @@ app.get("/download", async (req, res) => {
       const local = localName(abs, "js", seen);
       jobs.push({ absUrl: abs, local });
       $(el).attr("src", local);
+      if ($(el).attr("type") === "module") {
+        moduleEntries.push({ el, local });
+      }
     });
 
     // Modulepreload/preload de scripts (Vite/React e outros bundlers com
     // code-splitting expõem os chunks JS assim, não como <script src>)
+    const modulePreloadChunks = [];
     $('link[rel="modulepreload"], link[rel="preload"][as="script"]').each((_, el) => {
       const href = $(el).attr("href");
       if (!href) return;
@@ -143,6 +212,7 @@ app.get("/download", async (req, res) => {
       const local = localName(abs, "js", seen);
       jobs.push({ absUrl: abs, local });
       $(el).attr("href", local);
+      modulePreloadChunks.push({ el, local });
     });
 
     // Imagens
@@ -156,9 +226,23 @@ app.get("/download", async (req, res) => {
     });
 
     // Baixa todos os recursos em paralelo
-    const results = await Promise.all(
+    let results = await Promise.all(
       jobs.map(async (j) => ({ ...j, buf: await fetchBuffer(j.absUrl) }))
     );
+
+    // Empacota os scripts type="module" num script classico, pra dar pra
+    // abrir o index.html direto com duplo-clique (navegadores bloqueiam
+    // modulos ES quando a pagina vem de file://). So no modo SPA. Se o
+    // empacotamento falhar (ex: site importa algo de uma URL externa que
+    // o esbuild nao consegue resolver), mantem a versao original modular
+    // - o site continua baixavel, so precisa de um servidor local pra abrir.
+    if (useSpa && moduleEntries.length > 0) {
+      try {
+        results = await bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, results });
+      } catch (err) {
+        console.error("Falha ao empacotar JS (mantendo versao modular):", err.message);
+      }
+    }
 
     // Monta o ZIP
     const hostname = base.hostname.replace(/[^a-z0-9.-]/gi, "_");
