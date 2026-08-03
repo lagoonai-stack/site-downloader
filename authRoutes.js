@@ -71,9 +71,15 @@ router.post("/verify", verifyLimiter, async (req, res) => {
       return res.status(401).json({ error: "Codigo invalido ou expirado." });
     }
 
-    const { data: status } = await supabaseAdmin.rpc("get_subscriber_status", {
-      p_email: email,
-    });
+    const { data: status, error: statusError } = await supabaseAdmin.rpc(
+      "get_subscriber_status",
+      { p_email: email }
+    );
+
+    if (statusError) {
+      console.error("Erro ao consultar assinante:", statusError.message);
+      return res.status(500).json({ error: "Erro interno." });
+    }
 
     if (status !== "active") {
       return res.status(401).json({ error: "Assinatura nao encontrada ou inativa." });
@@ -105,9 +111,15 @@ router.post("/session-from-token", verifyLimiter, async (req, res) => {
     }
     const email = data.user.email.toLowerCase();
 
-    const { data: status } = await supabaseAdmin.rpc("get_subscriber_status", {
-      p_email: email,
-    });
+    const { data: status, error: statusError } = await supabaseAdmin.rpc(
+      "get_subscriber_status",
+      { p_email: email }
+    );
+
+    if (statusError) {
+      console.error("Erro ao consultar assinante:", statusError.message);
+      return res.status(500).json({ error: "Erro interno." });
+    }
 
     if (status !== "active") {
       return res.status(401).json({ error: "Assinatura nao encontrada ou inativa." });
