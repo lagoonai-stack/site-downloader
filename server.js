@@ -99,6 +99,57 @@ function localName(resUrl, folder, seen) {
   return final;
 }
 
+// Bundlers como Vite marcam chunks carregados sob demanda (React.lazy,
+// import() dinamico) com o nome do arquivo escrito em texto dentro do
+// bundle - mesmo que o navegador so peca esse arquivo quando alguem
+// realmente clica em algo (o que nunca acontece no carregamento unico
+// que o Puppeteer faz). Aqui a gente varre o texto de cada JS ja
+// baixado atras desses imports e busca os arquivos direto, recursivamente,
+// pra nao depender de "visitar" cada tela do site pra descobrir os chunks.
+async function crawlJsImports(initialResults, seen) {
+  const known = new Map();
+  for (const r of initialResults) known.set(r.absUrl, r);
+
+  const queue = initialResults
+    .filter((r) => r.local.startsWith("js/") && r.buf)
+    .map((r) => r.absUrl);
+
+  while (queue.length > 0) {
+    const abs = queue.shift();
+    const entry = known.get(abs);
+    if (!entry?.buf) continue;
+
+    const text = entry.buf.toString("utf8");
+    const specs = new Set();
+    for (const m of text.matchAll(/import\(\s*["'`](\.[^"'`]+?\.js)["'`]\s*\)/g)) {
+      specs.add(m[1]);
+    }
+    for (const m of text.matchAll(/\bfrom\s*["'`](\.[^"'`]+?\.js)["'`]/g)) {
+      specs.add(m[1]);
+    }
+
+    for (const spec of specs) {
+      let resolvedAbs;
+      try {
+        resolvedAbs = new URL(spec, abs).href;
+      } catch {
+        continue;
+      }
+      if (known.has(resolvedAbs)) continue;
+
+      const buf = await fetchBuffer(resolvedAbs);
+      known.set(resolvedAbs, { absUrl: resolvedAbs, local: null, buf });
+      if (!buf) continue;
+
+      const local = localName(resolvedAbs, "js", seen);
+      known.set(resolvedAbs, { absUrl: resolvedAbs, local, buf });
+      queue.push(resolvedAbs);
+    }
+  }
+
+  return Array.from(known.values()).filter((r) => r.local);
+}
+
 // Reescreve cada <script type="module" src="..."> como um bundle unico
 // em formato classico (iife), resolvendo os imports a partir dos arquivos
 // ja baixados em disco. O que for absorvido pelo bundle sai da lista de
@@ -229,6 +280,16 @@ app.get("/download", async (req, res) => {
     let results = await Promise.all(
       jobs.map(async (j) => ({ ...j, buf: await fetchBuffer(j.absUrl) }))
     );
+
+    // Busca tambem os chunks carregados sob demanda (nao aparecem no HTML,
+    // so referenciados em texto dentro dos JS ja baixados).
+    if (useSpa) {
+      try {
+        results = await crawlJsImports(results, seen);
+      } catch (err) {
+        console.error("Falha ao expandir dependencias JS:", err.message);
+      }
+    }
 
     // Empacota os scripts type="module" num script classico, pra dar pra
     // abrir o index.html direto com duplo-clique (navegadores bloqueiam
