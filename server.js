@@ -38,6 +38,24 @@ app.get("/styles.css", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "styles.css"))
 );
 
+// Diagnostico temporario: confirma, sem expor o segredo, exatamente
+// o que este container esta enxergando nas variaveis de ambiente.
+// Remover depois de resolver o problema de permissao no RPC.
+app.get("/api/debug-env", (req, res) => {
+  if (req.query.token !== process.env.KIWIFY_WEBHOOK_TOKEN) {
+    return res.status(404).end();
+  }
+  const mask = (v) => {
+    if (!v) return null;
+    return { length: v.length, prefix: v.slice(0, 12), suffix: v.slice(-8) };
+  };
+  res.json({
+    NODE_ENV: process.env.NODE_ENV,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: mask(process.env.SUPABASE_SERVICE_ROLE_KEY),
+  });
+});
+
 app.use(requireActiveSubscriber);
 
 app.use(express.static(path.join(__dirname, "public")));
