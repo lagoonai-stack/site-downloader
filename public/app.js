@@ -8,13 +8,12 @@ document.getElementById("btnLogout").addEventListener("click", async () => {
 
 btn.addEventListener("click", async () => {
   const url = document.getElementById("url").value.trim();
-  const spa = document.getElementById("spa").checked ? "1" : "0";
   if (!url) { status.textContent = "Cole uma URL primeiro."; return; }
 
   btn.disabled = true;
-  status.textContent = "Baixando... (SPA pode levar alguns segundos)";
+  status.textContent = "Baixando... (pode levar alguns segundos)";
   try {
-    const resp = await fetch(`/download?url=${encodeURIComponent(url)}&spa=${spa}`);
+    const resp = await fetch(`/download?url=${encodeURIComponent(url)}`);
     if (!resp.ok) throw new Error(await resp.text());
     const blob = await resp.blob();
     const a = document.createElement("a");

@@ -120,15 +120,19 @@ async function getHtml(url, useSpa) {
   return { html: data, requestedUrls: [] };
 }
 
+// Tudo (JS, CSS, imagens) cai numa unica pasta assets/, igual a
+// estrutura que a maioria das ferramentas de download de site usa
+// (index.html + assets/). "folder" so serve mais pra decidir a
+// extensao padrao quando o nome do arquivo original nao tem uma.
 function localName(resUrl, folder, seen) {
   let name = path.basename(new URL(resUrl).pathname) || "index";
   name = name.split("?")[0].split("#")[0] || "file";
   if (!path.extname(name)) name += folder === "css" ? ".css" : folder === "js" ? ".js" : "";
-  let final = `${folder}/${name}`;
+  let final = `assets/${name}`;
   let i = 1;
   while (seen.has(final)) {
     const ext = path.extname(name);
-    final = `${folder}/${path.basename(name, ext)}_${i++}${ext}`;
+    final = `assets/${path.basename(name, ext)}_${i++}${ext}`;
   }
   seen.add(final);
   return final;
@@ -146,7 +150,7 @@ async function crawlJsImports(initialResults, seen) {
   for (const r of initialResults) known.set(r.absUrl, r);
 
   const queue = initialResults
-    .filter((r) => r.local.startsWith("js/") && r.buf)
+    .filter((r) => r.buf && /\.m?js$/i.test(r.local))
     .map((r) => r.absUrl);
 
   while (queue.length > 0) {
@@ -213,7 +217,7 @@ async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, resu
     // arquivos antes de escrever em disco - assim o esbuild acha um
     // require()/import() resolvivel em vez da URL externa original.
     const externalRewrites = results
-      .filter((r) => r.buf && /^https?:\/\//.test(r.absUrl) && r.local?.startsWith("js/"))
+      .filter((r) => r.buf && /^https?:\/\//.test(r.absUrl) && /\.m?js$/i.test(r.local || ""))
       .map((r) => [r.absUrl, `./${path.basename(r.local)}`]);
 
     for (const r of results) {
@@ -240,7 +244,7 @@ async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, resu
 
     for (const [i, { el, local }] of moduleEntries.entries()) {
       const entryPath = path.join(tempDir, local);
-      const bundleLocal = `js/bundle-${i}.js`;
+      const bundleLocal = `assets/bundle-${i}.js`;
       const outPath = path.join(tempDir, bundleLocal);
 
       await esbuildBuild({
@@ -289,9 +293,44 @@ async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, resu
   }
 }
 
+// Decide sozinho se o site precisa de renderizacao via Puppeteer.
+// So texto curto no <body> nao basta (um site estatico simples, tipo
+// example.com, tambem tem pouco texto) - o sinal confiavel e uma div
+// raiz tipica de SPA (#root, #app, etc.) vazia, ou um script
+// type="module" combinado com quase nenhum texto visivel.
+function looksLikeEmptyShell(html) {
+  const $ = cheerio.load(html);
+
+  const hasEmptyRootDiv = $("#root, #app, #__next, #___gatsby, #svelte")
+    .toArray()
+    .some((el) => $(el).children().length === 0 && $(el).text().trim().length === 0);
+  if (hasEmptyRootDiv) return true;
+
+  const hasModuleScript = $('script[type="module"]').length > 0;
+
+  $("script, style, noscript").remove();
+  const text = $("body").text().replace(/\s+/g, " ").trim();
+
+  if (text.length < 40) return true;
+  return hasModuleScript && text.length < 200;
+}
+
+async function detectNeedsSpa(target) {
+  try {
+    const { data } = await axios.get(target, {
+      timeout: 15000,
+      maxRedirects: 5,
+      headers: { "User-Agent": UA },
+    });
+    return looksLikeEmptyShell(data);
+  } catch {
+    // se nem a busca simples funcionar, tenta o caminho mais robusto
+    return true;
+  }
+}
+
 app.get("/download", async (req, res) => {
   const target = req.query.url;
-  const useSpa = req.query.spa === "1";
   if (!target) return res.status(400).send("Falta o parametro ?url=");
 
   let base;
@@ -302,6 +341,7 @@ app.get("/download", async (req, res) => {
   }
 
   try {
+    const useSpa = await detectNeedsSpa(target);
     const { html, requestedUrls } = await getHtml(target, useSpa);
     const $ = cheerio.load(html);
     const seen = new Set();
