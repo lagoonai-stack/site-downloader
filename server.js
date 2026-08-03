@@ -71,18 +71,27 @@ async function getHtml(url, useSpa) {
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
+    // Import() dinamico disparado em runtime (lazy-loading real) nao
+    // aparece como <script>/<link modulepreload> no HTML final - a unica
+    // forma confiavel de saber quais arquivos o site realmente usa e
+    // registrar as requisicoes de rede de verdade durante o carregamento.
+    const requestedUrls = new Set();
+    page.on("request", (req) => requestedUrls.add(req.url()));
     await page.setUserAgent(UA);
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+    await new Promise((r) => setTimeout(r, 2000));
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
+    await new Promise((r) => setTimeout(r, 2000));
     const html = await page.content();
     await browser.close();
-    return html;
+    return { html, requestedUrls: Array.from(requestedUrls) };
   }
   const { data } = await axios.get(url, {
     timeout: 20000,
     maxRedirects: 5,
     headers: { "User-Agent": UA },
   });
-  return data;
+  return { html: data, requestedUrls: [] };
 }
 
 function localName(resUrl, folder, seen) {
@@ -121,17 +130,25 @@ async function crawlJsImports(initialResults, seen) {
 
     const text = entry.buf.toString("utf8");
     const specs = new Set();
-    for (const m of text.matchAll(/import\(\s*["'`](\.[^"'`]+?\.js)["'`]\s*\)/g)) {
+    // Especificador relativo ("./x.js"), absoluto de raiz ("/assets/x.js"),
+    // ou "nu" tipo "assets/x.js" - esse ultimo e como o Vite guarda seu
+    // mapa interno de dependencias de chunk (nao e uma chamada import()
+    // de verdade, e um array de strings com o nome de todo mundo).
+    for (const m of text.matchAll(/import\(\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.js)["'`]\s*\)/g)) {
       specs.add(m[1]);
     }
-    for (const m of text.matchAll(/\bfrom\s*["'`](\.[^"'`]+?\.js)["'`]/g)) {
+    for (const m of text.matchAll(/\bfrom\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.js)["'`]/g)) {
+      specs.add(m[1]);
+    }
+    for (const m of text.matchAll(/["'`](assets\/[^"'`]+?\.(?:js|css))["'`]/g)) {
       specs.add(m[1]);
     }
 
     for (const spec of specs) {
       let resolvedAbs;
       try {
-        resolvedAbs = new URL(spec, abs).href;
+        const normalized = /^\.{0,2}\//.test(spec) ? spec : `/${spec}`;
+        resolvedAbs = new URL(normalized, abs).href;
       } catch {
         continue;
       }
@@ -141,7 +158,8 @@ async function crawlJsImports(initialResults, seen) {
       known.set(resolvedAbs, { absUrl: resolvedAbs, local: null, buf });
       if (!buf) continue;
 
-      const local = localName(resolvedAbs, "js", seen);
+      const folder = resolvedAbs.endsWith(".css") ? "css" : "js";
+      const local = localName(resolvedAbs, folder, seen);
       known.set(resolvedAbs, { absUrl: resolvedAbs, local, buf });
       queue.push(resolvedAbs);
     }
@@ -231,7 +249,7 @@ app.get("/download", async (req, res) => {
   }
 
   try {
-    const html = await getHtml(target, useSpa);
+    const { html, requestedUrls } = await getHtml(target, useSpa);
     const $ = cheerio.load(html);
     const seen = new Set();
     const jobs = [];
@@ -291,6 +309,29 @@ app.get("/download", async (req, res) => {
       jobs.push({ absUrl: abs, local });
       $(el).attr("src", local);
     });
+
+    // Requisicoes de JS/CSS que o navegador realmente fez durante o
+    // carregamento (page.on("request")), mesmo sem tag correspondente no
+    // HTML - e o caso dos chunks carregados via import() em runtime. So
+    // do mesmo site (nao arrasta CDN de terceiros aqui, esses ja vem via
+    // <script src> normal).
+    const knownAbs = new Set(jobs.map((j) => j.absUrl));
+    for (const reqUrl of requestedUrls) {
+      let u;
+      try {
+        u = new URL(reqUrl);
+      } catch {
+        continue;
+      }
+      if (u.origin !== base.origin) continue;
+      if (!/\.(js|css)$/i.test(u.pathname)) continue;
+      if (knownAbs.has(u.href)) continue;
+
+      const folder = u.pathname.endsWith(".css") ? "css" : "js";
+      const local = localName(u.href, folder, seen);
+      jobs.push({ absUrl: u.href, local });
+      knownAbs.add(u.href);
+    }
 
     // Baixa todos os recursos em paralelo
     let results = await Promise.all(
