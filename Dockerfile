@@ -2,11 +2,15 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# O download do Chromium do puppeteer (dependencia opcional, usada so
-# no modo "SPA") e pesado e nao e necessario para o funcionamento
-# principal do login/downloader. Pulamos para builds mais rapidos e
-# previsiveis; o modo SPA fica desabilitado nesta imagem.
+# Chromium do proprio Debian em vez do binario baixado pelo puppeteer:
+# menor, com as libs de sistema resolvidas via apt, e usado pelo modo
+# "SPA" (renderizacao via Puppeteer) do downloader.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV NODE_ENV=production
 
 COPY package*.json ./
