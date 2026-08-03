@@ -196,7 +196,7 @@ async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, resu
 
       bundles.push({ local: bundleLocal, buf: await fsp.readFile(outPath) });
       absorbed.add(local);
-      $(el).removeAttr("type");
+      $(el).removeAttr("type").removeAttr("crossorigin").removeAttr("integrity");
       $(el).attr("src", bundleLocal);
     }
 
@@ -229,6 +229,12 @@ app.get("/download", async (req, res) => {
     const seen = new Set();
     const jobs = [];
 
+    // crossorigin/integrity forcam modo CORS na requisicao, que o
+    // navegador sempre recusa em paginas abertas via file:// (origem
+    // "null") - mesmo pro arquivo estando bem ao lado. Sem sentido pra
+    // um espelho local, entao removemos ao reescrever pro caminho local.
+    const dropCrossOrigin = (el) => $(el).removeAttr("crossorigin").removeAttr("integrity");
+
     // CSS
     $('link[rel="stylesheet"], link[as="style"]').each((_, el) => {
       const href = $(el).attr("href");
@@ -237,6 +243,7 @@ app.get("/download", async (req, res) => {
       const local = localName(abs, "css", seen);
       jobs.push({ absUrl: abs, local });
       $(el).attr("href", local);
+      dropCrossOrigin(el);
     });
 
     // JS
@@ -248,6 +255,7 @@ app.get("/download", async (req, res) => {
       const local = localName(abs, "js", seen);
       jobs.push({ absUrl: abs, local });
       $(el).attr("src", local);
+      dropCrossOrigin(el);
       if ($(el).attr("type") === "module") {
         moduleEntries.push({ el, local });
       }
@@ -263,6 +271,7 @@ app.get("/download", async (req, res) => {
       const local = localName(abs, "js", seen);
       jobs.push({ absUrl: abs, local });
       $(el).attr("href", local);
+      dropCrossOrigin(el);
       modulePreloadChunks.push({ el, local });
     });
 
