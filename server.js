@@ -134,6 +134,17 @@ app.get("/download", async (req, res) => {
       $(el).attr("src", local);
     });
 
+    // Modulepreload/preload de scripts (Vite/React e outros bundlers com
+    // code-splitting expõem os chunks JS assim, não como <script src>)
+    $('link[rel="modulepreload"], link[rel="preload"][as="script"]').each((_, el) => {
+      const href = $(el).attr("href");
+      if (!href) return;
+      const abs = new URL(href, base).href;
+      const local = localName(abs, "js", seen);
+      jobs.push({ absUrl: abs, local });
+      $(el).attr("href", local);
+    });
+
     // Imagens
     $("img[src]").each((_, el) => {
       const src = $(el).attr("src");
