@@ -78,18 +78,25 @@ async function getHtml(url, useSpa) {
     const requestedUrls = new Set();
     page.on("request", (req) => requestedUrls.add(req.url()));
     await page.setUserAgent(UA);
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+    // Alguns sites tem uma conexao (chat widget, websocket, polling de
+    // analytics) que nunca "esfria", entao networkidle2 as vezes nunca
+    // dispara. Se isso acontecer, a pagina normalmente ja carregou tudo
+    // que interessa mesmo assim - so seguimos em frente.
+    await page
+      .goto(url, { waitUntil: "networkidle2", timeout: 30000 })
+      .catch((err) => console.warn("Aviso: goto nao atingiu networkidle2:", err.message));
 
-    // Alguns construtores de site (Aura, Framer, Webflow preview, etc.)
-    // sao so um "wrapper": a pagina principal e so a ferramenta do
-    // construtor, e o site de verdade e renderizado dentro de um iframe
-    // (as vezes via srcdoc), que so aparece alguns segundos depois do
-    // carregamento inicial. Quando isso acontece, o conteudo que
-    // interessa baixar e o de dentro do iframe, nao o wrapper.
+    // Alguns construtores de site (Aura, etc.) sao so um "wrapper": a
+    // pagina principal e so a ferramenta do construtor, e o site de
+    // verdade e renderizado dentro de um <iframe srcdoc="...">, que so
+    // aparece alguns segundos depois do carregamento inicial. Detectamos
+    // isso especificamente por srcdoc (nao por "qualquer iframe"), pra
+    // nao confundir com iframes normais de terceiros (chat, pixel de
+    // rastreamento, mapa incorporado, etc.) que quase todo site tem.
     let targetFrame = page.mainFrame();
-    const frameDeadline = Date.now() + 25000;
+    const frameDeadline = Date.now() + 20000;
     while (Date.now() < frameDeadline) {
-      const child = page.frames().find((f) => f !== page.mainFrame());
+      const child = page.frames().find((f) => f.url() === "about:srcdoc");
       if (child) {
         targetFrame = child;
         break;
@@ -162,11 +169,17 @@ async function crawlJsImports(initialResults, seen) {
     for (const m of text.matchAll(/["'`](assets\/[^"'`]+?\.(?:js|css))["'`]/g)) {
       specs.add(m[1]);
     }
+    // require()/import() de uma URL absoluta de OUTRO dominio (comum em
+    // sites feitos com Framer, que puxa chunks compartilhados do proprio
+    // CDN dele em runtime). Guardamos a URL como veio (ja e absoluta).
+    for (const m of text.matchAll(/(?:require|import)\(\s*["'`](https?:\/\/[^"'`]+?\.m?js)["'`]\s*\)/g)) {
+      specs.add(m[1]);
+    }
 
     for (const spec of specs) {
       let resolvedAbs;
       try {
-        const normalized = /^\.{0,2}\//.test(spec) ? spec : `/${spec}`;
+        const normalized = /^https?:\/\//.test(spec) || /^\.{0,2}\//.test(spec) ? spec : `/${spec}`;
         resolvedAbs = new URL(normalized, abs).href;
       } catch {
         continue;
@@ -194,11 +207,32 @@ async function crawlJsImports(initialResults, seen) {
 async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, results }) {
   const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "site-downloader-"));
   try {
+    // Se algum arquivo foi baixado a partir de uma URL absoluta (ex: um
+    // chunk do CDN do Framer, referenciado via require("https://...")),
+    // troca essa URL pelo caminho relativo local no texto de TODOS os
+    // arquivos antes de escrever em disco - assim o esbuild acha um
+    // require()/import() resolvivel em vez da URL externa original.
+    const externalRewrites = results
+      .filter((r) => r.buf && /^https?:\/\//.test(r.absUrl) && r.local?.startsWith("js/"))
+      .map((r) => [r.absUrl, `./${path.basename(r.local)}`]);
+
     for (const r of results) {
       if (!r.buf) continue;
+      let buf = r.buf;
+      if (externalRewrites.length > 0 && r.local.endsWith(".js")) {
+        let text = buf.toString("utf8");
+        let changed = false;
+        for (const [url, localRel] of externalRewrites) {
+          if (text.includes(url)) {
+            text = text.split(url).join(localRel);
+            changed = true;
+          }
+        }
+        if (changed) buf = Buffer.from(text, "utf8");
+      }
       const dest = path.join(tempDir, r.local);
       await fsp.mkdir(path.dirname(dest), { recursive: true });
-      await fsp.writeFile(dest, r.buf);
+      await fsp.writeFile(dest, buf);
     }
 
     const absorbed = new Set();
