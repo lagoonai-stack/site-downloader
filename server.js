@@ -79,10 +79,29 @@ async function getHtml(url, useSpa) {
     page.on("request", (req) => requestedUrls.add(req.url()));
     await page.setUserAgent(UA);
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-    await new Promise((r) => setTimeout(r, 2000));
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
-    await new Promise((r) => setTimeout(r, 2000));
-    const html = await page.content();
+
+    // Alguns construtores de site (Aura, Framer, Webflow preview, etc.)
+    // sao so um "wrapper": a pagina principal e so a ferramenta do
+    // construtor, e o site de verdade e renderizado dentro de um iframe
+    // (as vezes via srcdoc), que so aparece alguns segundos depois do
+    // carregamento inicial. Quando isso acontece, o conteudo que
+    // interessa baixar e o de dentro do iframe, nao o wrapper.
+    let targetFrame = page.mainFrame();
+    const frameDeadline = Date.now() + 25000;
+    while (Date.now() < frameDeadline) {
+      const child = page.frames().find((f) => f !== page.mainFrame());
+      if (child) {
+        targetFrame = child;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    await new Promise((r) => setTimeout(r, 1500));
+    await targetFrame.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const html = await targetFrame.content();
     await browser.close();
     return { html, requestedUrls: Array.from(requestedUrls) };
   }
