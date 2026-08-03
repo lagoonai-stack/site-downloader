@@ -164,13 +164,13 @@ async function crawlJsImports(initialResults, seen) {
     // ou "nu" tipo "assets/x.js" - esse ultimo e como o Vite guarda seu
     // mapa interno de dependencias de chunk (nao e uma chamada import()
     // de verdade, e um array de strings com o nome de todo mundo).
-    for (const m of text.matchAll(/import\(\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.js)["'`]\s*\)/g)) {
+    for (const m of text.matchAll(/import\(\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.m?js)["'`]\s*\)/g)) {
       specs.add(m[1]);
     }
-    for (const m of text.matchAll(/\bfrom\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.js)["'`]/g)) {
+    for (const m of text.matchAll(/\bfrom\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.m?js)["'`]/g)) {
       specs.add(m[1]);
     }
-    for (const m of text.matchAll(/["'`](assets\/[^"'`]+?\.(?:js|css))["'`]/g)) {
+    for (const m of text.matchAll(/["'`](assets\/[^"'`]+?\.(?:m?js|css))["'`]/g)) {
       specs.add(m[1]);
     }
     // require()/import() de uma URL absoluta de OUTRO dominio (comum em
@@ -432,22 +432,25 @@ app.get("/download", async (req, res) => {
     );
 
     // Busca tambem os chunks carregados sob demanda (nao aparecem no HTML,
-    // so referenciados em texto dentro dos JS ja baixados).
-    if (useSpa) {
-      try {
-        results = await crawlJsImports(results, seen);
-      } catch (err) {
-        console.error("Falha ao expandir dependencias JS:", err.message);
-      }
+    // so referenciados em texto dentro dos JS ja baixados). Isso vale
+    // independente de ter usado Puppeteer ou nao - um site pode ja vir
+    // com texto suficiente no HTML puro (Framer, por exemplo, pre-
+    // renderiza pro SEO) e mesmo assim ter <script type="module"> que
+    // precisa ser empacotado pra funcionar offline.
+    try {
+      results = await crawlJsImports(results, seen);
+    } catch (err) {
+      console.error("Falha ao expandir dependencias JS:", err.message);
     }
 
     // Empacota os scripts type="module" num script classico, pra dar pra
     // abrir o index.html direto com duplo-clique (navegadores bloqueiam
-    // modulos ES quando a pagina vem de file://). So no modo SPA. Se o
-    // empacotamento falhar (ex: site importa algo de uma URL externa que
-    // o esbuild nao consegue resolver), mantem a versao original modular
-    // - o site continua baixavel, so precisa de um servidor local pra abrir.
-    if (useSpa && moduleEntries.length > 0) {
+    // modulos ES quando a pagina vem de file://), sempre que existir
+    // algum. Se o empacotamento falhar (ex: site importa algo de uma URL
+    // externa que o esbuild nao consegue resolver), mantem a versao
+    // original modular - o site continua baixavel, so precisa de um
+    // servidor local pra abrir.
+    if (moduleEntries.length > 0) {
       try {
         results = await bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, results });
       } catch (err) {
