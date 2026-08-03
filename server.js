@@ -196,8 +196,15 @@ async function bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, resu
 
       bundles.push({ local: bundleLocal, buf: await fsp.readFile(outPath) });
       absorbed.add(local);
-      $(el).removeAttr("type").removeAttr("crossorigin").removeAttr("integrity");
-      $(el).attr("src", bundleLocal);
+      // "defer" no lugar do comportamento implicito que type="module" tinha:
+      // sem isso, um <script> comum no <head> roda antes do <body> (e da
+      // div#root) existir no DOM.
+      $(el)
+        .removeAttr("type")
+        .removeAttr("crossorigin")
+        .removeAttr("integrity")
+        .attr("src", bundleLocal)
+        .attr("defer", "");
     }
 
     for (const { el, local } of modulePreloadChunks) {
