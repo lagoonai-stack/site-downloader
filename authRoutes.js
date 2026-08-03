@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { supabaseAdmin } from "./supabaseAdmin.js";
+import { supabaseAdmin, supabaseAuth } from "./supabaseAdmin.js";
 import { issueSession, clearSession, readSession } from "./session.js";
 
 const router = Router();
@@ -39,7 +39,7 @@ router.post("/login", loginLimiter, async (req, res) => {
     });
 
     if (status === "active") {
-      const { error } = await supabaseAdmin.auth.signInWithOtp({
+      const { error } = await supabaseAuth.auth.signInWithOtp({
         email,
         options: { shouldCreateUser: true },
       });
@@ -61,7 +61,7 @@ router.post("/verify", verifyLimiter, async (req, res) => {
   }
 
   try {
-    const { data, error } = await supabaseAdmin.auth.verifyOtp({
+    const { data, error } = await supabaseAuth.auth.verifyOtp({
       email,
       token: code,
       type: "email",
@@ -105,7 +105,7 @@ router.post("/session-from-token", verifyLimiter, async (req, res) => {
   }
 
   try {
-    const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
+    const { data, error } = await supabaseAuth.auth.getUser(accessToken);
     if (error || !data?.user?.email) {
       return res.status(401).json({ error: "Token invalido ou expirado." });
     }

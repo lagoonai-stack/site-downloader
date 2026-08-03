@@ -7,6 +7,11 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     "SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY precisam estar definidos no .env"
   );
 }
-export const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+
+const clientOptions = {
   auth: { autoRefreshToken: false, persistSession: false },
-});
+};
+
+export const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, clientOptions);
+
+export const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, clientOptions);
