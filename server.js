@@ -49,6 +49,9 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
+// Casa url(...) em CSS, com ou sem aspas.
+const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1?\s*\)/g;
+
 async function fetchBuffer(url) {
   try {
     const { data } = await axios.get(url, {
@@ -75,8 +78,11 @@ async function getHtml(url, useSpa) {
     // aparece como <script>/<link modulepreload> no HTML final - a unica
     // forma confiavel de saber quais arquivos o site realmente usa e
     // registrar as requisicoes de rede de verdade durante o carregamento.
-    const requestedUrls = new Set();
-    page.on("request", (req) => requestedUrls.add(req.url()));
+    // Guardamos o Request inteiro (nao so a URL) porque precisamos saber
+    // de qual FRAME cada requisicao veio - filtramos isso depois de
+    // decidir qual frame e o "de verdade" (ver mais abaixo).
+    const seenRequests = [];
+    page.on("request", (req) => seenRequests.push(req));
     await page.setUserAgent(UA);
     // Alguns sites tem uma conexao (chat widget, websocket, polling de
     // analytics) que nunca "esfria", entao networkidle2 as vezes nunca
@@ -109,8 +115,28 @@ async function getHtml(url, useSpa) {
     await new Promise((r) => setTimeout(r, 1500));
 
     const html = await targetFrame.content();
+
+    // So as requisicoes feitas pelo frame que a gente de fato usou. Sem
+    // isso, quando o site e um "wrapper com iframe" (Aura), o zip vinha
+    // lotado de centenas de arquivos JS da ferramenta do construtor -
+    // que fez suas proprias requisicoes por fora, mas nao tem nada a
+    // ver com o site do usuario.
+    const requestedUrls = Array.from(
+      new Set(
+        seenRequests
+          .filter((r) => {
+            try {
+              return r.frame() === targetFrame;
+            } catch {
+              return false;
+            }
+          })
+          .map((r) => r.url())
+      )
+    );
+
     await browser.close();
-    return { html, requestedUrls: Array.from(requestedUrls) };
+    return { html, requestedUrls };
   }
   const { data } = await axios.get(url, {
     timeout: 20000,
@@ -199,6 +225,59 @@ async function crawlJsImports(initialResults, seen) {
       known.set(resolvedAbs, { absUrl: resolvedAbs, local, buf });
       queue.push(resolvedAbs);
     }
+  }
+
+  return Array.from(known.values()).filter((r) => r.local);
+}
+
+// Varre cada CSS ja baixado atras de url(...) - imagens de background,
+// fontes (@font-face) etc. O navegador busca isso sozinho quando roda
+// de verdade, mas um crawler baseado so no HTML nunca ve essas
+// referencias porque elas vivem dentro do texto do CSS, nao em atributo
+// de tag. Baixa o que falta e reescreve o CSS pra apontar pro arquivo
+// local (relativo, ja que tudo vive junto em assets/).
+async function crawlCssUrls(results, seen) {
+  const known = new Map();
+  for (const r of results) known.set(r.absUrl, r);
+
+  const cssTargets = results.filter((r) => r.buf && r.local.endsWith(".css"));
+
+  for (const cssResult of cssTargets) {
+    const refs = [...cssResult.buf.toString("utf8").matchAll(CSS_URL_RE)]
+      .map((m) => m[2].trim())
+      .filter((raw) => raw && !raw.startsWith("data:") && !raw.startsWith("#"));
+
+    for (const raw of refs) {
+      let abs;
+      try {
+        abs = new URL(raw, cssResult.absUrl).href;
+      } catch {
+        continue;
+      }
+      if (known.has(abs)) continue;
+
+      const buf = await fetchBuffer(abs);
+      known.set(abs, { absUrl: abs, local: null, buf });
+      if (!buf) continue;
+
+      const local = localName(abs, "img", seen);
+      known.set(abs, { absUrl: abs, local, buf });
+    }
+
+    const text = cssResult.buf.toString("utf8").replace(CSS_URL_RE, (full, _quote, raw) => {
+      const trimmed = raw.trim();
+      if (!trimmed || trimmed.startsWith("data:") || trimmed.startsWith("#")) return full;
+      let abs;
+      try {
+        abs = new URL(trimmed, cssResult.absUrl).href;
+      } catch {
+        return full;
+      }
+      const entry = known.get(abs);
+      if (!entry?.local) return full;
+      return `url(${path.basename(entry.local)})`;
+    });
+    cssResult.buf = Buffer.from(text, "utf8");
   }
 
   return Array.from(known.values()).filter((r) => r.local);
@@ -364,6 +443,34 @@ app.get("/download", async (req, res) => {
       dropCrossOrigin(el);
     });
 
+    // CSS inline (<style> e atributo style="") tambem referencia imagem/
+    // fonte via url(...) - o navegador so busca essas imagens de fundo
+    // via CSS, entao sem isso elas desaparecem silenciosamente da copia
+    // (nao contam como <img> quebrada, mas o efeito visual falta).
+    const rewriteInlineCssUrls = (cssText) =>
+      cssText.replace(CSS_URL_RE, (full, _quote, raw) => {
+        const trimmed = raw.trim();
+        if (!trimmed || trimmed.startsWith("data:") || trimmed.startsWith("#")) return full;
+        let abs;
+        try {
+          abs = new URL(trimmed, base).href;
+        } catch {
+          return full;
+        }
+        const local = localName(abs, "img", seen);
+        jobs.push({ absUrl: abs, local });
+        return `url(${local})`;
+      });
+
+    $("style").each((_, el) => {
+      const text = $(el).html();
+      if (text && text.includes("url(")) $(el).html(rewriteInlineCssUrls(text));
+    });
+    $("[style]").each((_, el) => {
+      const styleAttr = $(el).attr("style");
+      if (styleAttr && styleAttr.includes("url(")) $(el).attr("style", rewriteInlineCssUrls(styleAttr));
+    });
+
     // JS
     const moduleEntries = [];
     $("script[src]").each((_, el) => {
@@ -393,8 +500,40 @@ app.get("/download", async (req, res) => {
       modulePreloadChunks.push({ el, local });
     });
 
-    // Imagens
-    $("img[src]").each((_, el) => {
+    // Imagens (src + srcset - o navegador so busca a variante que casa
+    // com o viewport atual, mas o arquivo baixado deve funcionar em
+    // qualquer tela, entao baixamos todas as variantes listadas)
+    $("img[src], img[srcset], source[srcset]").each((_, el) => {
+      const src = $(el).attr("src");
+      if (src && !src.startsWith("data:")) {
+        const abs = new URL(src, base).href;
+        const local = localName(abs, "img", seen);
+        jobs.push({ absUrl: abs, local });
+        $(el).attr("src", local);
+      }
+
+      const srcset = $(el).attr("srcset");
+      if (srcset) {
+        const rewritten = srcset
+          .split(",")
+          .map((part) => {
+            const trimmed = part.trim();
+            const spaceIdx = trimmed.search(/\s/);
+            const url = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
+            const descriptor = spaceIdx === -1 ? "" : trimmed.slice(spaceIdx);
+            if (!url || url.startsWith("data:")) return trimmed;
+            const abs = new URL(url, base).href;
+            const local = localName(abs, "img", seen);
+            jobs.push({ absUrl: abs, local });
+            return `${local}${descriptor}`;
+          })
+          .join(", ");
+        $(el).attr("srcset", rewritten);
+      }
+    });
+
+    // Video/audio (src, poster, e <source> dentro deles)
+    $("video[src], audio[src], video source[src], audio source[src]").each((_, el) => {
       const src = $(el).attr("src");
       if (!src || src.startsWith("data:")) return;
       const abs = new URL(src, base).href;
@@ -402,13 +541,24 @@ app.get("/download", async (req, res) => {
       jobs.push({ absUrl: abs, local });
       $(el).attr("src", local);
     });
+    $("video[poster]").each((_, el) => {
+      const poster = $(el).attr("poster");
+      if (!poster || poster.startsWith("data:")) return;
+      const abs = new URL(poster, base).href;
+      const local = localName(abs, "img", seen);
+      jobs.push({ absUrl: abs, local });
+      $(el).attr("poster", local);
+    });
 
-    // Requisicoes de JS/CSS que o navegador realmente fez durante o
-    // carregamento (page.on("request")), mesmo sem tag correspondente no
-    // HTML - e o caso dos chunks carregados via import() em runtime. So
-    // do mesmo site (nao arrasta CDN de terceiros aqui, esses ja vem via
-    // <script src> normal).
+    // Requisicoes que o navegador realmente fez durante o carregamento
+    // (page.on("request")) sem tag correspondente no HTML - cobre chunks
+    // JS carregados via import() em runtime, CDN de terceiros (React,
+    // Babel etc. carregados via <script> dinamico), video/imagem/fonte
+    // que so aparecem via CSS ou logica JS. Nao restringe mais por
+    // dominio nem extensao - se o frame que baixamos pediu, faz parte
+    // do site de verdade (ja filtramos pra so esse frame em getHtml).
     const knownAbs = new Set(jobs.map((j) => j.absUrl));
+    const IMG_EXT = /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
     for (const reqUrl of requestedUrls) {
       let u;
       try {
@@ -416,11 +566,15 @@ app.get("/download", async (req, res) => {
       } catch {
         continue;
       }
-      if (u.origin !== base.origin) continue;
-      if (!/\.(js|css)$/i.test(u.pathname)) continue;
+      if (u.protocol !== "http:" && u.protocol !== "https:") continue;
+      if (u.href === base.href) continue;
       if (knownAbs.has(u.href)) continue;
 
-      const folder = u.pathname.endsWith(".css") ? "css" : "js";
+      const folder = u.pathname.endsWith(".css")
+        ? "css"
+        : IMG_EXT.test(u.pathname)
+        ? "img"
+        : "js";
       const local = localName(u.href, folder, seen);
       jobs.push({ absUrl: u.href, local });
       knownAbs.add(u.href);
@@ -441,6 +595,14 @@ app.get("/download", async (req, res) => {
       results = await crawlJsImports(results, seen);
     } catch (err) {
       console.error("Falha ao expandir dependencias JS:", err.message);
+    }
+
+    // Mesma logica pra CSS: imagem de fundo, fonte @font-face etc.
+    // referenciadas via url(...) dentro do arquivo .css baixado.
+    try {
+      results = await crawlCssUrls(results, seen);
+    } catch (err) {
+      console.error("Falha ao expandir url() do CSS:", err.message);
     }
 
     // Empacota os scripts type="module" num script classico, pra dar pra
