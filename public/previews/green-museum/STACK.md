@@ -1,0 +1,6 @@
+- **Tailwind CSS** — utility-first CSS framework powering all layout, spacing, color, and responsive behavior (loaded via local `assets/resource_3fa48481346f.js` runtime)
+- **Iconify** — `<iconify-icon>` web component runtime that renders all icons on the page (loaded via local `assets/iconify-icon_e19829e7f0e8.js`)
+- **Solar icon set (via Iconify)** — UI iconography (arrows, ticket, magnifier, crown, mailbox, columns, etc.) referenced as `solar:*-linear` / `solar:*-bold`
+- **Simple Icons (via Iconify)** — brand logos for partners and social links (Instagram, X, YouTube, Facebook, Patreon, Medium, Kickstarter, ArtStation, British Museum, Sotheby's, British Airways)
+- **Google Fonts** — webfont delivery for Instrument Sans, Playfair Display, Newsreader, Geist, Roboto, Montserrat, Poppins, Instrument Serif, Merriweather, Bricolage Grotesque, Plus Jakarta Sans, Manrope, Space Grotesk, Work Sans, PT Serif, Geist Mono, Space Mono, Quicksand, Nunito, Google Sans Flex, Oswald, DM Sans (loaded via local `css2_*.css` files plus self-hosted `.woff2` files in `assets/`)
+- **Supabase Storage** — public CDN URL referenced as a CSS background image and as the fallback-image pool used by the inline image-error handler

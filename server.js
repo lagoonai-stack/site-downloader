@@ -23,7 +23,16 @@ const app = express();
 // o rate-limit (por IP) nao consegue identificar os visitantes direito.
 app.set("trust proxy", 1);
 
-app.use(helmet());
+// As previas em /previews sao HTML baixado de sites de terceiros (nao
+// gerado por nos) e costuma trazer <script> inline - o CSP padrao do
+// helmet bloquearia essa execucao. A rota ja fica atras do gate de
+// assinante ativo, entao isentar so essa arvore de arquivos estaticos
+// e seguro.
+const helmetMiddleware = helmet();
+app.use((req, res, next) => {
+  if (req.path.startsWith("/previews/")) return next();
+  return helmetMiddleware(req, res, next);
+});
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 

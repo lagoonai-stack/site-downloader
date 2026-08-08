@@ -1,0 +1,20 @@
+/* Force native scroll - override Lenis */
+html, body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: auto !important;
+}
+html.lenis, body.lenis {
+  overflow: auto !important;
+}
+
+/* Hide loaders immediately */
+.loader, .preloader, .page-loader, [class*="loader"] {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Ensure body is visible */
+body {
+  opacity: 1 !important;
+}

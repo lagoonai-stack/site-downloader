@@ -1,0 +1,27 @@
+- **WordPress 6.9.4** — content management system that generated the original page export
+- **Sanok Theme** — minimalist one-page/multipage WordPress theme that defines the overall design language
+- **WPBakery / Visual Composer (js_composer)** — page builder responsible for the row/column layout and `vc_*` utility classes
+- **Slider Revolution (sr7)** — full-screen hero slider with three rotating slides ("we create", "Explore Sanok", "why not")
+- **Cubeportfolio (jQuery cbp)** — responsive isotope-style portfolio grid with filter chips (All / Slider / Video / Gallery / Image)
+- **Ultimate VC Addons (Brainstorm Force)** — info-circle list, info-box carousel, animated headings and decorative shortcodes
+- **Slick (slick.min.js)** — carousel engine driving the "Why Choose Us" feature carousel inside Ultimate VC Addons
+- **Contact Form 7** — markup and validation for the "Get in Touch" contact form
+- **jQuery 3.7.1 + jQuery Migrate + jQuery UI** — core DOM library for plugin compatibility
+- **Bootstrap (bootstrap.min.js)** — utility classes and layout helpers used by the theme
+- **Masonry + ImagesLoaded** — masonry-style image grid layout helpers
+- **Stellar.js (jquery.stellar)** — parallax scroll backgrounds in the hero and feature rows
+- **FlexSlider (jquery.flexslider-min)** — secondary slider engine bundled with the theme
+- **DLMenu (jquery.dlmenu)** — mobile multi-level navigation menu
+- **Select2 (jquery.select2)** — enhanced styled `<select>` controls for forms
+- **QueryLoader2** — preloader/loading-screen overlay used during initial page paint
+- **Modernizr (naapo-modernizr)** — feature detection (touch / cssanimations / csstransforms classes on `<html>`)
+- **Waypoint** — scroll-position trigger library for scroll-revealed sections
+- **SmoothScroll** — momentum/easing wheel scrolling enhancement
+- **WP Emoji Loader** — WordPress emoji compatibility shim
+- **FontAwesome 4** — icon font used in the footer (phone, map, envelope) and social icons
+- **Linearicons (Smile Fonts)** — line-style icon font powering the "Why Choose Us" service icons
+- **Smile Fonts Defaults** — secondary icon font used in the info-circle list (home, headphones, cogs, group, flask, umbrella)
+- **Google Fonts (Mulish, Hind, Poppins, Open Sans, Josefin Sans, Dosis, Montserrat)** — typography system, with Poppins as the dominant headline face
+- **Google Maps API** — map embed referenced for the contact area
+- **animate.css** — entrance animation utility classes consumed by WPBakery's `wpb_animate_when_almost_visible` blocks
+- **Twitter X SVG (inline)** — custom inline SVG used to replace FontAwesome's deprecated Twitter glyph

@@ -1,0 +1,594 @@
+[
+  {
+    "slug": "aetheris-web3-72.aura.build",
+    "name": "Aetheris Web3",
+    "category": "escuro",
+    "thumb": "thumbs/aetheris-web3-72.aura.build.webp",
+    "liveUrl": "https://aetheris-web3-72.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "ai-intelligence-saas.aura.build",
+    "name": "Ai Intelligence Saas",
+    "category": "escuro",
+    "thumb": "thumbs/ai-intelligence-saas.aura.build.webp",
+    "liveUrl": "https://ai-intelligence-saas.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "ai-social-automation.aura.build",
+    "name": "Ai Social Automation",
+    "category": "escuro",
+    "thumb": "thumbs/ai-social-automation.aura.build.webp",
+    "liveUrl": "https://ai-social-automation.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "autonomous-drone-62.aura.build",
+    "name": "Autonomous Drone",
+    "category": "escuro",
+    "thumb": "thumbs/autonomous-drone-62.aura.build.webp",
+    "liveUrl": "https://autonomous-drone-62.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "cadence-landing-19.aura.build",
+    "name": "Cadence Landing",
+    "category": "escuro",
+    "thumb": "thumbs/cadence-landing-19.aura.build.webp",
+    "liveUrl": "https://cadence-landing-19.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "canvas-visual.aura.build",
+    "name": "Canvas Visual",
+    "category": "escuro",
+    "thumb": "thumbs/canvas-visual.aura.build.webp",
+    "liveUrl": "https://canvas-visual.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "cogni.aura.build",
+    "name": "Cogni",
+    "category": "escuro",
+    "thumb": "thumbs/cogni.aura.build.webp",
+    "liveUrl": "https://cogni.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "creative-agency-template.aura.build",
+    "name": "Creative Agency Template",
+    "category": "escuro",
+    "thumb": "thumbs/creative-agency-template.aura.build.webp",
+    "liveUrl": "https://creative-agency-template.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "cybersecurity-saas-landing-page-template.aura.build",
+    "name": "Cybersecurity Saas Landing Page Template",
+    "category": "escuro",
+    "thumb": "thumbs/cybersecurity-saas-landing-page-template.aura.build.webp",
+    "liveUrl": "https://cybersecurity-saas-landing-page-template.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "finex-finance-saas.aura.build",
+    "name": "Finex Finance Saas",
+    "category": "escuro",
+    "thumb": "thumbs/finex-finance-saas.aura.build.webp",
+    "liveUrl": "https://finex-finance-saas.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "flux-motion.aura.build",
+    "name": "Flux Motion",
+    "category": "escuro",
+    "thumb": "thumbs/flux-motion.aura.build.webp",
+    "liveUrl": "https://flux-motion.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "fluxora.aura.build",
+    "name": "Fluxora",
+    "category": "escuro",
+    "thumb": "thumbs/fluxora.aura.build.webp",
+    "liveUrl": "https://fluxora.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "glass-effect2",
+    "name": "Glass Effect2",
+    "category": "escuro",
+    "thumb": "thumbs/glass-effect2.webp",
+    "liveUrl": null,
+    "previewPath": "previews/glass-effect2/design-system.html"
+  },
+  {
+    "slug": "glass-green-effect",
+    "name": "Glass Green Effect",
+    "category": "escuro",
+    "thumb": "thumbs/glass-green-effect.webp",
+    "liveUrl": null,
+    "previewPath": "previews/glass-green-effect/design-system.html"
+  },
+  {
+    "slug": "langfuse",
+    "name": "Langfuse",
+    "category": "escuro",
+    "thumb": "thumbs/langfuse.webp",
+    "liveUrl": null,
+    "previewPath": "previews/langfuse/design-system.html"
+  },
+  {
+    "slug": "lumimotion-ai-ui-prompt.aura.build",
+    "name": "Lumimotion Ai Ui Prompt",
+    "category": "escuro",
+    "thumb": "thumbs/lumimotion-ai-ui-prompt.aura.build.webp",
+    "liveUrl": "https://lumimotion-ai-ui-prompt.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "lumina-video",
+    "name": "Lumina Video",
+    "category": "escuro",
+    "thumb": "thumbs/lumina-video.webp",
+    "liveUrl": null,
+    "previewPath": "previews/lumina-video/design-system.html"
+  },
+  {
+    "slug": "novachain-crypto-trading-protocol-1.aura.build",
+    "name": "Novachain Crypto Trading Protocol",
+    "category": "escuro",
+    "thumb": "thumbs/novachain-crypto-trading-protocol-1.aura.build.webp",
+    "liveUrl": "https://novachain-crypto-trading-protocol-1.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "pulsedesk-saas.aura.build",
+    "name": "Pulsedesk Saas",
+    "category": "escuro",
+    "thumb": "thumbs/pulsedesk-saas.aura.build.webp",
+    "liveUrl": "https://pulsedesk-saas.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "sonic-link.aura.build",
+    "name": "Sonic Link",
+    "category": "escuro",
+    "thumb": "thumbs/sonic-link.aura.build.webp",
+    "liveUrl": "https://sonic-link.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "agent.humanacademy",
+    "name": "Agent Humanacademy",
+    "category": "claro",
+    "thumb": "thumbs/agent.humanacademy.webp",
+    "liveUrl": "https://agent.humanacademy/",
+    "previewPath": null
+  },
+  {
+    "slug": "ai-saas-landing-27.aura.build",
+    "name": "Ai Saas Landing",
+    "category": "claro",
+    "thumb": "thumbs/ai-saas-landing-27.aura.build.webp",
+    "liveUrl": "https://ai-saas-landing-27.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "antigravity.google",
+    "name": "Antigravity",
+    "category": "claro",
+    "thumb": "thumbs/antigravity.google.webp",
+    "liveUrl": "https://antigravity.google/",
+    "previewPath": null
+  },
+  {
+    "slug": "architecture-studio.aura.build",
+    "name": "Architecture Studio",
+    "category": "claro",
+    "thumb": "thumbs/architecture-studio.aura.build.webp",
+    "liveUrl": "https://architecture-studio.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "aris-photograph.aura.build",
+    "name": "Aris Photograph",
+    "category": "claro",
+    "thumb": "thumbs/aris-photograph.aura.build.webp",
+    "liveUrl": "https://aris-photograph.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "bloomava-creative-93.aura.build",
+    "name": "Bloomava Creative",
+    "category": "claro",
+    "thumb": "thumbs/bloomava-creative-93.aura.build.webp",
+    "liveUrl": "https://bloomava-creative-93.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "digital-architect.aura.build",
+    "name": "Digital Architect",
+    "category": "claro",
+    "thumb": "thumbs/digital-architect.aura.build.webp",
+    "liveUrl": "https://digital-architect.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "echelon.aura.build",
+    "name": "Echelon",
+    "category": "claro",
+    "thumb": "thumbs/echelon.aura.build.webp",
+    "liveUrl": "https://echelon.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "elicyon.com",
+    "name": "Elicyon",
+    "category": "claro",
+    "thumb": "thumbs/elicyon.com.webp",
+    "liveUrl": "https://elicyon.com/",
+    "previewPath": null
+  },
+  {
+    "slug": "futureui.aura.build",
+    "name": "Futureui",
+    "category": "claro",
+    "thumb": "thumbs/futureui.aura.build.webp",
+    "liveUrl": "https://futureui.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "genlabs.aura.build",
+    "name": "Genlabs",
+    "category": "claro",
+    "thumb": "thumbs/genlabs.aura.build.webp",
+    "liveUrl": "https://genlabs.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "green-museum",
+    "name": "Green Museum",
+    "category": "claro",
+    "thumb": "thumbs/green-museum.webp",
+    "liveUrl": null,
+    "previewPath": "previews/green-museum/design-system.html"
+  },
+  {
+    "slug": "luxury-desert-retreat-1.aura.build",
+    "name": "Luxury Desert Retreat",
+    "category": "claro",
+    "thumb": "thumbs/luxury-desert-retreat-1.aura.build.webp",
+    "liveUrl": "https://luxury-desert-retreat-1.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "luxury-real-estate-22.aura.build",
+    "name": "Luxury Real Estate",
+    "category": "claro",
+    "thumb": "thumbs/luxury-real-estate-22.aura.build.webp",
+    "liveUrl": "https://luxury-real-estate-22.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "nexus-architecture.aura.build",
+    "name": "Nexus Architecture",
+    "category": "claro",
+    "thumb": "thumbs/nexus-architecture.aura.build.webp",
+    "liveUrl": "https://nexus-architecture.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "open-design.ai",
+    "name": "Open Design",
+    "category": "claro",
+    "thumb": "thumbs/open-design.ai.webp",
+    "liveUrl": "https://open-design.ai/",
+    "previewPath": null
+  },
+  {
+    "slug": "parallax-clean",
+    "name": "Parallax Clean",
+    "category": "claro",
+    "thumb": "thumbs/parallax-clean.webp",
+    "liveUrl": null,
+    "previewPath": "previews/parallax-clean/design-system.html"
+  },
+  {
+    "slug": "playverse.aura.build",
+    "name": "Playverse",
+    "category": "claro",
+    "thumb": "thumbs/playverse.aura.build.webp",
+    "liveUrl": "https://playverse.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "preview.naapothemes.net_sanok_demo9",
+    "name": "Sanok",
+    "category": "claro",
+    "thumb": "thumbs/preview.naapothemes.net_sanok_demo9.webp",
+    "liveUrl": null,
+    "previewPath": "previews/preview.naapothemes.net_sanok_demo9/design-system.html"
+  },
+  {
+    "slug": "savory-plate.aura.build",
+    "name": "Savory Plate",
+    "category": "claro",
+    "thumb": "thumbs/savory-plate.aura.build.webp",
+    "liveUrl": "https://savory-plate.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "white-medical",
+    "name": "White Medical",
+    "category": "claro",
+    "thumb": "thumbs/white-medical.webp",
+    "liveUrl": null,
+    "previewPath": "previews/white-medical/design-system.html"
+  },
+  {
+    "slug": "ai-automation-17.aura.build",
+    "name": "Ai Automation",
+    "category": "escuro",
+    "thumb": "thumbs/ai-automation-17.aura.build.webp",
+    "liveUrl": "https://ai-automation-17.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "hu169yr",
+    "name": "Aurora Motion",
+    "category": "escuro",
+    "thumb": "thumbs/hu169yr.webp",
+    "liveUrl": null,
+    "previewPath": "previews/hu169yr/index.html"
+  },
+  {
+    "slug": "parallax-geometry",
+    "name": "Parallax Geometry",
+    "category": "escuro",
+    "thumb": "thumbs/parallax-geometry.webp",
+    "liveUrl": null,
+    "previewPath": "previews/parallax-geometry/index.html"
+  },
+  {
+    "slug": "open-source-llm-10.aura.build",
+    "name": "Open Source Llm",
+    "category": "claro",
+    "thumb": "thumbs/open-source-llm-10.aura.build.webp",
+    "liveUrl": "https://open-source-llm-10.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "volta-ev.aura.build",
+    "name": "Volta Ev",
+    "category": "claro",
+    "thumb": "thumbs/volta-ev.aura.build.webp",
+    "liveUrl": "https://volta-ev.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "glass-pricing",
+    "name": "Glass Pricing",
+    "category": "componente",
+    "thumb": "thumbs/glass-pricing.webp",
+    "liveUrl": null,
+    "previewPath": "previews/glass-pricing/index.html"
+  },
+  {
+    "slug": "wix.com_studio_design_inspiration_spac",
+    "name": "Studio Inspiration",
+    "category": "componente",
+    "thumb": "thumbs/wix.com_studio_design_inspiration_spac.webp",
+    "liveUrl": null,
+    "previewPath": "previews/wix.com_studio_design_inspiration_spac/index.html"
+  },
+  {
+    "slug": "aex.aura.build",
+    "name": "Aex",
+    "category": "escuro",
+    "thumb": "thumbs/aex.aura.build.webp",
+    "liveUrl": "https://aex.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "ai-marketing-56.aura.build",
+    "name": "Ai Marketing",
+    "category": "escuro",
+    "thumb": "thumbs/ai-marketing-56.aura.build.webp",
+    "liveUrl": "https://ai-marketing-56.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "condor-landingpage.aura.build",
+    "name": "Condor Landingpage",
+    "category": "escuro",
+    "thumb": "thumbs/condor-landingpage.aura.build.webp",
+    "liveUrl": "https://condor-landingpage.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "financial-infrastruc-68.aura.build",
+    "name": "Financial Infrastructure",
+    "category": "escuro",
+    "thumb": "thumbs/financial-infrastruc-68.aura.build.webp",
+    "liveUrl": "https://financial-infrastruc-68.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "green-site",
+    "name": "Green Site",
+    "category": "escuro",
+    "thumb": "thumbs/green-site.webp",
+    "liveUrl": null,
+    "previewPath": "previews/green-site/index.html"
+  },
+  {
+    "slug": "imagenation.art",
+    "name": "Imagenation",
+    "category": "escuro",
+    "thumb": "thumbs/imagenation.art.webp",
+    "liveUrl": "https://imagenation.art/",
+    "previewPath": null
+  },
+  {
+    "slug": "jonathanfernandes.aura.build",
+    "name": "Jonathanfernandes",
+    "category": "escuro",
+    "thumb": "thumbs/jonathanfernandes.aura.build.webp",
+    "liveUrl": "https://jonathanfernandes.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "axion-ai.aura.build",
+    "name": "Axion Ai",
+    "category": "claro",
+    "thumb": "thumbs/axion-ai.aura.build.webp",
+    "liveUrl": "https://axion-ai.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "barbershop-landing-51.aura.build",
+    "name": "Barbershop Landing",
+    "category": "claro",
+    "thumb": "thumbs/barbershop-landing-51.aura.build.webp",
+    "liveUrl": "https://barbershop-landing-51.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "core-developer-56.aura.build",
+    "name": "Core Developer",
+    "category": "claro",
+    "thumb": "thumbs/core-developer-56.aura.build.webp",
+    "liveUrl": "https://core-developer-56.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "esports-tournament-96.aura.build",
+    "name": "Esports Tournament",
+    "category": "claro",
+    "thumb": "thumbs/esports-tournament-96.aura.build.webp",
+    "liveUrl": "https://esports-tournament-96.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "finex-internet.aura.build",
+    "name": "Finex Internet",
+    "category": "claro",
+    "thumb": "thumbs/finex-internet.aura.build.webp",
+    "liveUrl": "https://finex-internet.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "futuristic-webgl.aura.build",
+    "name": "Futuristic Webgl",
+    "category": "claro",
+    "thumb": "thumbs/futuristic-webgl.aura.build.webp",
+    "liveUrl": "https://futuristic-webgl.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "monolith-architecture.aura.build",
+    "name": "Monolith Architecture",
+    "category": "claro",
+    "thumb": "thumbs/monolith-architecture.aura.build.webp",
+    "liveUrl": "https://monolith-architecture.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "saas-developer.aura.build",
+    "name": "Saas Developer",
+    "category": "claro",
+    "thumb": "thumbs/saas-developer.aura.build.webp",
+    "liveUrl": "https://saas-developer.aura.build/",
+    "previewPath": null
+  },
+  {
+    "slug": "animation-clean",
+    "name": "Animation Clean",
+    "category": "componente",
+    "thumb": "thumbs/animation-clean.webp",
+    "liveUrl": null,
+    "previewPath": "previews/animation-clean/index.html"
+  },
+  {
+    "slug": "animations-gemini",
+    "name": "Animations Gemini",
+    "category": "componente",
+    "thumb": "thumbs/animations-gemini.webp",
+    "liveUrl": null,
+    "previewPath": "previews/animations-gemini/index.html"
+  },
+  {
+    "slug": "animations-gemini2",
+    "name": "Animations Gemini2",
+    "category": "componente",
+    "thumb": "thumbs/animations-gemini2.webp",
+    "liveUrl": null,
+    "previewPath": "previews/animations-gemini2/index.html"
+  },
+  {
+    "slug": "cool-dashboard",
+    "name": "Cool Dashboard",
+    "category": "componente",
+    "thumb": "thumbs/cool-dashboard.webp",
+    "liveUrl": null,
+    "previewPath": "previews/cool-dashboard/index.html"
+  },
+  {
+    "slug": "dashboard-list",
+    "name": "Dashboard List",
+    "category": "componente",
+    "thumb": "thumbs/dashboard-list.webp",
+    "liveUrl": null,
+    "previewPath": "previews/dashboard-list/index.html"
+  },
+  {
+    "slug": "glass-effect",
+    "name": "Glass Effect",
+    "category": "componente",
+    "thumb": "thumbs/glass-effect.webp",
+    "liveUrl": null,
+    "previewPath": "previews/glass-effect/index.html"
+  },
+  {
+    "slug": "instagram-slides",
+    "name": "Instagram Slides",
+    "category": "componente",
+    "thumb": "thumbs/instagram-slides.webp",
+    "liveUrl": null,
+    "previewPath": "previews/instagram-slides/index.html"
+  },
+  {
+    "slug": "marketplace-light",
+    "name": "Marketplace Light",
+    "category": "componente",
+    "thumb": "thumbs/marketplace-light.webp",
+    "liveUrl": null,
+    "previewPath": "previews/marketplace-light/index.html"
+  },
+  {
+    "slug": "pagina-de-captura",
+    "name": "Página de Captura",
+    "category": "componente",
+    "thumb": "thumbs/pagina-de-captura.webp",
+    "liveUrl": null,
+    "previewPath": "previews/pagina-de-captura/index.html"
+  },
+  {
+    "slug": "photographer-portifolio",
+    "name": "Photographer Portifolio",
+    "category": "componente",
+    "thumb": "thumbs/photographer-portifolio.webp",
+    "liveUrl": null,
+    "previewPath": "previews/photographer-portifolio/index.html"
+  },
+  {
+    "slug": "sidebar",
+    "name": "Sidebar",
+    "category": "componente",
+    "thumb": "thumbs/sidebar.webp",
+    "liveUrl": null,
+    "previewPath": "previews/sidebar/index.html"
+  }
+]

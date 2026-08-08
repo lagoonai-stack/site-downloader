@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Desempenho incomparavel - Hospedagem moderna</title>
+
+<!-- head-only js: Tailwind runtime (utility classes used throughout the page) -->
+<script src="assets/resource_3fa48481346f.js"></script>
+
+<!-- head-only js: Lucide icons runtime (renders <i data-lucide> elements) -->
+<script src="https://unpkg.com/lucide@0.260.0/dist/lucide.min.js"></script>
+
+<!-- css: glow effects, hover animations, ambient lighting and keyframes used across the page -->
+<link rel="stylesheet" href="assets/css/effects.css"/>
+</head>
+<body class="antialiased min-h-screen relative overflow-x-hidden text-slate-100 bg-gradient-to-br from-[#0b1620] to-[#0a1a2b] md:cursor-none">
+
+<!-- ambient-lighting -->
+<div class="ambient-light"></div>
+<div class="ambient-light-2"></div>
+
+<!-- custom-cursor -->
+<div class="pointer-events-none fixed top-0 left-0 z-50 hidden md:block" id="cursor-ring" style="width:28px;height:28px;border:1.5px solid rgba(45,212,191,0.85);border-radius:9999px;transform:translate(-50%,-50%) scale(1);box-shadow:rgba(13,148,136,0.15) 0 0 0 2px,rgba(20,184,166,0.25) 0 0 30px;transition:width .2s,height .2s,border-color .2s,box-shadow .2s,transform .06s,opacity .2s;backdrop-filter:blur(1px);opacity:.9;"></div>
+<div class="pointer-events-none fixed top-0 left-0 z-50 hidden md:block" id="cursor-dot" style="width:6px;height:6px;background:rgba(94,234,212,0.95);border-radius:9999px;transform:translate(-50%,-50%);transition:transform .06s,opacity .2s;box-shadow:rgba(94,234,212,0.6) 0 0 10px;opacity:.9;"></div>
+
+<!-- header -->
+<header class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-10 animate-fade-in">
+<div class="flex items-center space-x-4">
+<div class="rounded-xl bg-gradient-to-br from-teal-500/90 to-cyan-400/90 p-1.5 glow-teal animate-glow logo-hover cursor-glow">
+<div class="rounded-xl bg-[#0b1a28] w-9 h-9 flex items-center justify-center logo-icon">
+<img src="assets/images/svg/logo-server.svg" width="20" height="20" alt="Logotipo servidor"/>
+</div>
+</div>
+<div class="animate-fade-in delay-100 hover-lift cursor-glow">
+<div class="text-sm text-slate-300 hover-glow transition-all duration-300">Hospedagem Global</div>
+<div class="text-lg font-semibold tracking-tight text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">Infraestrutura em nuvem ultra-rapida</div>
+</div>
+</div>
+<div class="flex items-center space-x-3 animate-fade-in delay-200">
+<span class="px-3 py-1 rounded-full text-sm bg-teal-600/20 text-teal-300 border border-teal-500/40 glow-border backdrop-glow hover-float cursor-glow">Energia renovavel: 100%</span>
+<button class="px-4 py-2 rounded-full bg-teal-600 hover:bg-teal-500 text-white text-sm shadow-lg hover:shadow-xl glow-teal-intense button-hover cursor-pointer" onclick="downloadPage()">Baixar HTML</button>
+</div>
+</header>
+
+<!-- main-grid -->
+<main class="max-w-7xl mx-auto px-6 pb-12 relative z-10">
+<section class="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+<article class="relative rounded-3xl overflow-hidden bg-[#0e1a2a] glow-card animate-scale-in cursor-glow">
+<div class="card-content">
+<div class="card-image-hover">
+<img alt="Renderizacao 3D de data center" class="w-full h-96 object-cover md:h-full" src="assets/photo-1658243762592-d3ff6f8a9a_5c9037f90edf.jpg"/>
+</div>
+<div class="absolute bottom-0 left-0 w-full flex gap-4 backdrop-glow bg-neutral-50/10 pt-5 pr-5 pb-5 pl-5 items-center justify-between floating-stats-hover">
+<div class="flex items-center gap-5 animate-float">
+<div class="flex items-center space-x-2 bg-teal-600/30 border border-teal-400/50 px-3 py-2 rounded-xl backdrop-glow glow-border hover-lift cursor-glow">
+<svg aria-hidden="true" class="text-teal-300 hover-glow transition-all duration-300" fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M3 3h18v18H3z"/><path d="M7 15h3"/><path d="M8 12h2"/></svg>
+<span class="text-sm font-semibold hover-glow transition-all duration-300">MV Total</span>
+<span class="text-sm font-semibold ml-1 text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">188.8</span>
+</div>
+<div class="text-white/80 text-sm tracking-tight hover-lift cursor-glow">
+<span class="block hover-glow transition-all duration-300">Area total:</span>
+<span class="font-semibold text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">244.000+ pes</span>
+</div>
+<div class="text-white/80 text-sm tracking-tight hover-lift cursor-glow">
+<span class="block hover-glow transition-all duration-300">Capacidade de racks:</span>
+<span class="font-semibold text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">300+</span>
+</div>
+</div>
+<button class="px-5 py-3 rounded-full bg-teal-500 hover:bg-teal-600 text-white font-semibold glow-teal-intense button-hover animate-float cursor-pointer" style="animation-delay:.5s;">Nosso data center</button>
+</div>
+</div>
+</article>
+
+<aside class="rounded-3xl bg-[#142033] p-8 flex flex-col justify-center glow-card animate-scale-in delay-200 bg-gradient-glow hover-bg-shift cursor-glow" style="background:linear-gradient(135deg,rgba(20,184,166,0.1),rgba(6,182,212,0.05),rgba(20,184,166,0.08));">
+<div class="card-content">
+<div class="inline-flex items-center mb-4 gap-3 animate-fade-in delay-300">
+<span class="px-3 py-1 rounded-full border border-slate-500/50 text-slate-200 text-xs glow-border backdrop-glow tag-hover">Desempenho</span>
+<span class="px-3 py-1 rounded-full border border-slate-500/50 text-slate-200 text-xs glow-border backdrop-glow tag-hover">Nuvem</span>
+</div>
+<h1 class="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight mb-4 leading-tight text-glow animate-slide-up delay-400 hover-glow interactive-text cursor-glow transition-all duration-500">Desempenho incomparavel</h1>
+<p class="text-slate-300 leading-relaxed text-sm md:text-base animate-slide-up delay-500 hover-glow cursor-glow transition-all duration-300">Para oferecer uma experiencia de hospedagem web rapida, usamos tecnologias inovadoras: HTTP/3, IPv6 e servidores LiteSpeed. Os planos premium e empresariais tambem incluem largura de banda ilimitada, para que o trafego do seu site nao seja limitado.</p>
+<div class="mt-6 flex flex-wrap gap-3 animate-slide-up delay-600">
+<span aria-label="Tag de recurso" class="px-3 py-2 rounded-full bg-slate-800/60 text-sm glow-border backdrop-glow tag-hover">Offshore</span>
+<span aria-label="Tag de recurso" class="px-3 py-2 rounded-full bg-slate-800/60 text-sm glow-border backdrop-glow tag-hover">Anti DDoS</span>
+<span aria-label="Tag de recurso" class="px-3 py-2 rounded-full bg-slate-800/60 text-sm glow-border backdrop-glow tag-hover">Hospedagem VPS SSD</span>
+</div>
+</div>
+</aside>
+</section>
+
+<!-- sub-hero-cards -->
+<section class="grid md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6 mt-8">
+<article class="rounded-2xl bg-[#0e1a2a] overflow-hidden glow-card animate-scale-in delay-300 cursor-glow">
+<div class="card-content">
+<div class="relative h-72 bg-center bg-cover card-image-hover" style="background-image:url('https://images.unsplash.com/photo-1564866657314-0aabc2f9a5a0?auto=format&amp;fit=crop&amp;w=1200&amp;q=80');">
+<img alt="Visualizacao de seguranca" class="w-full h-full object-cover" src="assets/photo-1669062897193-f8a4215c20_340863947964.jpg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0e1a2a]/60 to-transparent hover:from-[#0e1a2a]/40 transition-all duration-500"></div>
+</div>
+<div class="p-5 bg-gradient-glow">
+<div class="flex items-center justify-between animate-fade-in delay-400">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-slate-800/60 border border-slate-700/50 glow-border backdrop-glow tag-hover">CloudLinux</span>
+<span class="text-xs text-slate-300 text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">LVE</span>
+</div>
+<h3 class="mt-3 text-xl font-semibold tracking-tight text-glow animate-slide-up delay-500 hover-glow interactive-text cursor-glow transition-all duration-300">Seguranca total</h3>
+<p class="text-slate-300 text-sm mt-2 animate-slide-up delay-600 hover-glow cursor-glow transition-all duration-300">Nosso foco principal e hospedagem web segura. Oferecemos uma gama de servicos para garantir isso, incluindo SSL gratuito e protecao contra DDoS.</p>
+<div class="mt-4 flex justify-end">
+<div class="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center glow-border backdrop-glow">
+<i class="text-teal-300" data-lucide="shield-check" style="width:20px;height:20px;"></i>
+</div>
+</div>
+</div>
+</div>
+</article>
+
+<article class="rounded-2xl bg-[#0e1a2a] overflow-hidden glow-card animate-scale-in delay-400 cursor-glow">
+<div class="card-content">
+<div class="relative h-72 bg-center bg-cover card-image-hover" style="background-image:url('https://images.unsplash.com/photo-1518779578993-56dfd8f0b3fb?auto=format&amp;fit=crop&amp;w=1200&amp;q=80');">
+<img alt="Otimizacao para WordPress" class="w-full h-full object-cover" src="assets/photo-1644329770639-1a20809b82_d528bf5936f1.jpg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0e1a2a]/60 to-transparent hover:from-[#0e1a2a]/40 transition-all duration-500"></div>
+</div>
+<div class="pt-5 pr-5 pb-5 pl-5">
+<div class="flex items-center justify-between animate-fade-in delay-500">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-slate-800/60 border border-slate-700/50 glow-border backdrop-glow tag-hover">WordPress</span>
+<span class="text-xs text-slate-300 text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">Um clique</span>
+</div>
+<h3 class="mt-3 text-xl font-semibold tracking-tight text-glow animate-slide-up delay-600 hover-glow interactive-text cursor-glow transition-all duration-300">Otimizado para WordPress</h3>
+<p class="text-slate-300 text-sm mt-2 animate-slide-up delay-700 hover-glow cursor-glow transition-all duration-300">Servicos de hospedagem projetados para tornar o gerenciamento do seu site WordPress simples. Hospedagem compartilhada com sensacao de exclusividade.</p>
+<div class="mt-4 flex justify-end">
+<div class="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center glow-border backdrop-glow">
+<i class="text-teal-300" data-lucide="wand-2" style="width:20px;height:20px;"></i>
+</div>
+</div>
+</div>
+</div>
+</article>
+
+<article class="rounded-2xl bg-[#0e1a2a] overflow-hidden glow-card animate-scale-in delay-500 cursor-glow">
+<div class="card-content">
+<div class="relative h-72 bg-center bg-cover card-image-hover" style='background-image:url("photo-1496307042754-b4aa456c4a_25ffe7012263.avif");'>
+<img alt="Interface de controle do servidor" class="w-full h-full object-cover" src="assets/photo-1737505599162-d9932323a8_6b96c0b064bc.jpg"/>
+<div class="absolute inset-0 hover:from-[#0e1a2a]/40 transition-all duration-500 bg-gradient-to-t from-[#0e1a2a]/60 to-transparent"></div>
+</div>
+<div class="pt-5 pr-5 pb-5 pl-5">
+<div class="flex items-center justify-between animate-fade-in delay-600">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-slate-800/60 border border-slate-700/50 glow-border backdrop-glow tag-hover">SSH</span>
+<span class="text-xs text-slate-300 text-glow hover-glow interactive-text cursor-pointer transition-all duration-300">WP-CLI</span>
+</div>
+<h3 class="mt-3 text-xl font-semibold tracking-tight text-glow animate-slide-up delay-700 hover-glow interactive-text cursor-glow transition-all duration-300">Controle completo</h3>
+<p class="text-slate-300 text-sm mt-2 animate-slide-up delay-800 hover-glow cursor-glow transition-all duration-300">Gerenciamento seguro com acesso SSH, backups automatizados e uma CLI poderosa para cada tarefa.</p>
+<div class="mt-4 flex justify-end">
+<div class="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center glow-border backdrop-glow">
+<i class="text-teal-300" data-lucide="terminal" style="width:20px;height:20px;"></i>
+</div>
+</div>
+</div>
+</div>
+</article>
+</section>
+</main>
+
+<!-- features-and-cta -->
+<section class="relative z-10 mt-6">
+<div class="max-w-7xl mr-auto ml-auto pr-6 pl-6">
+<div class="h-px bg-white/10"></div>
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+<article class="rounded-2xl bg-[#0e1a2a] p-6 glow-card hover-lift cursor-glow">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center glow-border backdrop-glow">
+<i class="text-teal-300" data-lucide="rocket" style="width:20px;height:20px;"></i>
+</div>
+<h3 class="text-lg font-semibold tracking-tight text-glow">Configuracao instantanea</h3>
+</div>
+<p class="mt-3 text-sm text-slate-300">Implante em minutos com provisionamento automatizado, padroes otimizados e roteamento global na borda.</p>
+</article>
+<article class="rounded-2xl bg-[#0e1a2a] p-6 glow-card hover-lift cursor-glow">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center glow-border backdrop-glow">
+<i class="text-teal-300" data-lucide="shield-check" style="width:20px;height:20px;"></i>
+</div>
+<h3 class="text-lg font-semibold tracking-tight text-glow">Seguranca reforcada</h3>
+</div>
+<p class="mt-3 text-sm text-slate-300">WAF integrado, SSL gratuito e monitoramento 24/7 mantem suas aplicacoes seguras sem plugins extras.</p>
+</article>
+<article class="rounded-2xl bg-[#0e1a2a] p-6 glow-card hover-lift cursor-glow sm:col-span-2 lg:col-span-1">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center glow-border backdrop-glow">
+<i class="text-teal-300" data-lucide="globe-2" style="width:20px;height:20px;"></i>
+</div>
+<h3 class="text-lg font-semibold tracking-tight text-glow">Presenca global</h3>
+</div>
+<p class="mt-3 text-sm text-slate-300">DNS Anycast e implantacoes multi-regiao garantem baixa latencia para usuarios em qualquer lugar.</p>
+</article>
+</div>
+<div class="mt-8 rounded-3xl border border-teal-500/40 bg-gradient-to-r from-teal-600/20 to-cyan-500/20 p-6 md:p-8 glow-border backdrop-glow hover-float cursor-glow">
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div>
+<h4 class="text-2xl md:text-3xl font-semibold tracking-tight text-glow">Pronto para lancar mais rapido?</h4>
+<p class="text-slate-300 text-sm md:text-base mt-1">Crie seu projeto com um clique e escale conforme voce cresce.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-3 rounded-full bg-teal-500 hover:bg-teal-600 text-white font-semibold glow-teal-intense button-hover cursor-pointer">Comecar agora</button>
+<a class="px-5 py-3 rounded-full border border-slate-600/60 text-slate-200 hover:bg-slate-800/60 font-semibold glow-border button-hover cursor-pointer" href="#">Ver precos</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- footer -->
+<footer class="mt-12 relative z-10">
+<div class="max-w-7xl mx-auto px-6 pb-8">
+<p class="text-sm text-slate-400 animate-fade-in delay-800 hover-glow cursor-glow transition-all duration-300">Design system inspirado em frameworks de UI premium. As fontes foram ajustadas para clareza e tracking nitido em titulos acima de 20px.</p>
+</div>
+</footer>
+
+<!-- js: download handler, Lucide icon initialization and the snake-style custom cursor -->
+<script src="assets/js/interactions.js"></script>
+
+</body>
+</html>

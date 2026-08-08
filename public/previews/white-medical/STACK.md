@@ -1,0 +1,8 @@
+- **Tailwind CSS** — utility-first CSS framework loaded via local runtime (`resource_3fa48481346f.js`) used for all layout, spacing, color, and responsive styling
+- **Iconify** — icon framework rendering `<span class="iconify" data-icon="...">` placeholders, primarily using the Solar and Remix Icon (ri) icon sets for medical/UI icons
+- **Lucide** — icon library (loaded but used by `lucide.createIcons()` call as a render hook for any `<i data-lucide>` placeholders)
+- **Chart.js** — charting library used to render the Recovery Trajectory line chart with custom gradients, dashed comparison lines, and animated tooltips
+- **Unicorn Studio** — embedded interactive aura/background component loaded from CDN (`unicornstudio.js@v1.4.29`) via the `data-us-project` attribute
+- **Google Fonts (self-hosted)** — local CSS files for Inter, Plus Jakarta Sans, Geist, Roboto, Montserrat, Poppins, Playfair Display, Instrument Serif, Merriweather, Bricolage Grotesque, Manrope, Space Grotesk, Work Sans, PT Serif, Geist Mono, Space Mono, Quicksand, Nunito, Newsreader, Google Sans Flex, Oswald, DM Sans
+- **IntersectionObserver API** — native browser API used to trigger `.scroll-reveal` animations when sections enter the viewport
+- **Supabase Storage** — fallback CDN for image assets, referenced in the inline image-error handler that swaps broken `<img>` sources for known-good replacements

@@ -2,3 +2,8 @@ node_modules/
 .env
 .env.local
 *.log
+
+# Pastas-fonte da galeria (310MB) - so o subconjunto curado em public/
+# (thumbs/, previews/, catalog.json) e commitado.
+/galeria_arquivo/
+/brabo_design_system/

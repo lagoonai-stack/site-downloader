@@ -1,0 +1,19 @@
+/* Falling Beams Animation */
+@keyframes beam-fall {
+  0% { transform: translateY(-100%); opacity: 0; }
+  5% { opacity: 0.5; }
+  50% { opacity: 1; }
+  95% { opacity: 0.5; }
+  100% { transform: translateY(120vh); opacity: 0; }
+}
+.animate-beam-1 { animation: beam-fall 6s linear infinite; animation-delay: 0s; }
+.animate-beam-2 { animation: beam-fall 8s linear infinite; animation-delay: 2s; }
+.animate-beam-3 { animation: beam-fall 7s linear infinite; animation-delay: 4s; }
+
+/* Scroll-reveal fade + slide */
+@keyframes fadeSlideIn {
+  0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0px); }
+}
+.animate-on-scroll { animation-play-state: paused !important; }
+.animate-on-scroll.animate { animation-play-state: running !important; }

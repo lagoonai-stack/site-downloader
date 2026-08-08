@@ -1,0 +1,11 @@
+- **Tailwind CSS** — utility-first CSS framework (loaded via local `resource_3fa48481346f.js`) used for all layout, spacing, color and typography utilities.
+- **Tailwind plugin (custom)** — registers `rotate-x/y/z`, `perspective-*` and `transform-style-*` 3D utilities at runtime.
+- **Lucide** — icon library (loaded via local `lucide_latest_2eebd0ebe8c2.js`) rendering icons declared with `data-lucide` (play, sparkles, arrow-right, check, video, scan-line, download, quote).
+- **UnicornStudio** — embedded WebGL runtime (loaded from `cdn.jsdelivr.net`) that drives the animated Aura background component.
+- **Google Fonts (Geist + Instrument Serif)** — sans-serif body font and decorative serif (used in the mobile mockup brand mark) loaded via local `css2_*.css` stylesheets.
+- **IntersectionObserver API** — vanilla browser API used to trigger scroll-reveal animations on `.animate-on-scroll` elements.
+- **Custom CSS keyframes** — `floating-points`, `beam-fall`, and `fadeSlideIn` animations powering the button particles, falling beams, and scroll-reveal entrances.
+- **Custom CSS border-gradient mask** — shared `[style*="--border-gradient"]::before` helper that paints gradient borders via CSS mask compositing.
+- **WebP imagery** — hero background, card stack thumbnails and footer texture stored as `.webp` files under `assets/`.
+- **JPG avatars** — testimonial profile pictures stored as `.jpg` files under `assets/`.
+- **WOFF2 fonts** — local font binaries for Geist and Instrument Serif served alongside the page.

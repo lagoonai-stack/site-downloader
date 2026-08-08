@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VITALIS - Cuidados Médicos Avançados</title>
+
+<!-- fonts -->
+<link href="assets/css2_19fd9cc6b396.css" rel="stylesheet"/>
+<link href="assets/css2_86e10c4bcbd4.css" rel="stylesheet"/>
+<link href="assets/css2_0fc20595ebff.css" rel="stylesheet"/>
+<link href="assets/css2_23afcbef9bdd.css" rel="stylesheet"/>
+<link href="assets/css2_82ced711bf49.css" rel="stylesheet"/>
+<link href="assets/css2_fa22aa91016e.css" rel="stylesheet"/>
+<link href="assets/css2_2b2d87bc82d8.css" rel="stylesheet"/>
+<link href="assets/css2_4fef849c83da.css" rel="stylesheet"/>
+<link href="assets/css2_a7b22b336fe1.css" rel="stylesheet"/>
+<link href="assets/css2_0b2072b66163.css" rel="stylesheet"/>
+<link href="assets/css2_9b8bf743d4a8.css" rel="stylesheet"/>
+<link href="assets/css2_8e191ef32247.css" rel="stylesheet"/>
+<link href="assets/css2_70fd47a02eed.css" rel="stylesheet"/>
+<link href="assets/css2_b52fc18295f8.css" rel="stylesheet"/>
+<link href="assets/css2_62759cd015bd.css" rel="stylesheet"/>
+<link href="assets/css2_f495c2faa2a6.css" rel="stylesheet"/>
+<link href="assets/css2_6f16cdd6fd9f.css" rel="stylesheet"/>
+<link href="assets/css2_94cb6f0c406a.css" rel="stylesheet"/>
+<link href="assets/css2_6c160a0c4e6f.css" rel="stylesheet"/>
+<link href="assets/css2_bd407d5ceb4b.css" rel="stylesheet"/>
+<link href="assets/css2_176e25227b5e.css" rel="stylesheet"/>
+<link href="assets/css2_e5ca562f8909.css" rel="stylesheet"/>
+
+<!-- css -->
+<!-- Design system: typography, grid lines, beam animations, scroll-reveal, mobile menu, marquee, font utility classes -->
+<link rel="stylesheet" href="assets/css/design-system.css"/>
+
+<!-- head-only js (Tailwind runtime, must stay in head to process utility classes before paint) -->
+<!-- Tailwind CSS runtime -->
+<script src="assets/resource_3fa48481346f.js"></script>
+<!-- Iconify icon framework (renders <span class="iconify" data-icon="..."> placeholders) -->
+<script src="assets/iconify_654a1ef798a3.js"></script>
+<!-- Lucide icon library (renders <i data-lucide> placeholders) -->
+<script src="assets/lucide_latest_2eebd0ebe8c2.js"></script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen w-full selection:bg-teal-100 selection:text-teal-900 relative overflow-x-hidden antialiased">
+
+<!-- aura-background -->
+<div class="aura-background-component top-0 w-full -z-10 absolute blur-md h-[700px]" data-alpha-mask="80" style="mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent)">
+<div class="aura-background-component top-0 w-full -z-10 absolute h-full">
+<div class="absolute w-full h-full left-0 top-0 -z-10" data-us-project="FixNvEwvWwbu3QX9qC3F"></div>
+</div>
+</div>
+
+<!-- mobile-menu -->
+<div class="fixed inset-0 z-[60] bg-white/95 backdrop-blur-xl hidden-menu flex flex-col pt-32 px-8 border-b border-slate-100" id="mobile-menu">
+<button class="absolute top-8 right-6 text-slate-500 hover:text-slate-900" id="close-menu">
+<span class="iconify w-8 h-8" data-icon="solar:close-circle-linear"></span>
+</button>
+<nav class="flex flex-col gap-8 text-2xl font-medium tracking-tight">
+<a class="hover:text-teal-600 transition-colors border-b border-slate-100 pb-4" href="#">Serviços</a>
+<a class="hover:text-teal-600 transition-colors border-b border-slate-100 pb-4" href="#">Especialistas</a>
+<a class="hover:text-teal-600 transition-colors border-b border-slate-100 pb-4" href="#">Pesquisa</a>
+<a class="hover:text-teal-600 transition-colors border-b border-slate-100 pb-4" href="#">Pacientes</a>
+</nav>
+<div class="mt-auto mb-12">
+<a class="flex w-full items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider bg-slate-900 text-white py-4 rounded hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200" href="#">Agendar Consulta</a>
+</div>
+</div>
+
+<!-- ambient-background -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[600px] lg:w-[900px] h-[600px] lg:h-[900px] bg-sky-50 rounded-full blur-[80px] lg:blur-[120px] opacity-60"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[500px] lg:w-[700px] h-[500px] lg:h-[700px] bg-teal-50 rounded-full blur-[80px] lg:blur-[120px] opacity-60"></div>
+</div>
+
+<!-- global-grid -->
+<div class="fixed inset-0 z-0 pointer-events-none hidden lg:block h-screen">
+<div class="grid-line-v" style="left: var(--gx-1)"></div>
+<div class="grid-line-v" style="left: var(--gx-2)"><div class="beam-v" style="animation: beam-v 6s infinite 1s;"></div></div>
+<div class="grid-line-v" style="left: var(--gx-3)"><div class="beam-v" style="animation: beam-v 7s infinite 3s;"></div></div>
+<div class="grid-line-v" style="left: var(--gx-4)"></div>
+<div class="grid-line-h" style="top: var(--gy-1)"></div>
+<div class="grid-line-h" style="top: 35%"></div>
+<div class="grid-line-h" style="top: 75%"></div>
+</div>
+
+<!-- navbar -->
+<nav class="relative z-50 w-full h-[80px] lg:h-[100px] flex items-center justify-between px-6 lg:px-[6%] border-b border-slate-100 bg-white/70 backdrop-blur-md animate-reveal sticky top-0">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-teal-50 text-teal-600 rounded flex items-center justify-center">
+<span class="iconify w-5 h-5" data-icon="solar:add-square-linear"></span>
+</div>
+<span class="text-lg font-semibold tracking-tight text-slate-900">VITALIS</span>
+</div>
+<div class="hidden md:flex text-sm font-medium text-slate-500 gap-x-8 items-center">
+<a class="hover:text-slate-900 transition-colors" href="#">Serviços</a>
+<a class="hover:text-slate-900 transition-colors" href="#">Especialistas</a>
+<a class="hover:text-slate-900 transition-colors" href="#">Pesquisa</a>
+<a class="hover:text-slate-900 transition-colors" href="#">Pacientes</a>
+</div>
+<div class="flex items-center gap-4">
+<a class="hidden md:flex items-center gap-2 text-xs font-semibold uppercase tracking-wider bg-slate-900 text-white py-2.5 px-5 rounded hover:bg-slate-800 transition-all shadow-md shadow-slate-200 hover:shadow-lg" href="#">Agendar Consulta</a>
+<button class="md:hidden text-slate-600 hover:text-slate-900 transition-colors" id="open-menu">
+<span class="iconify w-6 h-6" data-icon="solar:hamburger-menu-linear"></span>
+</button>
+</div>
+</nav>
+
+<!-- hero -->
+<section class="flex flex-col lg:block lg:h-[calc(100vh-100px)] z-10 w-full relative">
+<div class="order-1 flex flex-col lg:py-0 lg:absolute lg:top-0 lg:right-[38%] lg:bottom-[6%] lg:left-[28%] lg:pr-12 lg:pl-12 z-20 pointer-events-none pt-20 pr-12 pb-12 pl-12 relative justify-center">
+<h1 class="sm:text-6xl md:text-7xl lg:text-[3.5rem] xl:text-[4.5rem] leading-[1] lg:leading-[0.95] lg:text-left text-5xl font-semibold text-slate-900 tracking-tight text-center">
+<span class="block animate-reveal delay-100">Saúde</span>
+<span class="block text-slate-400 lg:ml-[0.5em] animate-reveal delay-200">com Foco</span>
+<span class="block text-teal-600 animate-reveal delay-300">em Precisão</span>
+</h1>
+<div class="flex animate-reveal delay-500 lg:justify-start lg:pl-2 lg:mt-12 pointer-events-auto mt-12 pl-2 gap-x-6 gap-y-6 items-center justify-center">
+<button class="group flex items-center gap-3 pl-6 pr-2 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-full transition-all shadow-sm">
+<span class="text-sm font-medium text-slate-700">Encontrar especialista</span>
+<div class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-900 group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors">
+<span class="iconify w-4 h-4" data-icon="solar:arrow-right-linear"></span>
+</div>
+</button>
+<div class="flex flex-col text-left">
+<span class="text-xs font-semibold text-slate-900 uppercase tracking-wide">Tempo de Espera Emergência</span>
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="text-xs text-slate-500 font-mono">12 MIN</span>
+</div>
+</div>
+</div>
+</div>
+<!-- hero-sidebar -->
+<div class="relative order-2 w-full px-6 py-12 border-y border-slate-100 lg:border-y-0 lg:border-r lg:absolute lg:left-[6%] lg:top-0 lg:bottom-[6%] lg:w-[22%] lg:px-0 lg:py-0 flex flex-col bg-slate-50/50 lg:bg-transparent">
+<div class="lg:pt-12 lg:pr-8 lg:absolute lg:top-0 lg:h-[62%] lg:w-full animate-reveal delay-200">
+<p class="leading-relaxed lg:text-left lg:mx-0 text-base font-normal text-slate-500 text-center max-w-md mx-auto">A VITALIS combina diagnósticos avançados com cuidado humanizado para criar um novo padrão de excelência médica.</p>
+</div>
+<div class="mt-12 lg:mt-0 lg:absolute lg:top-[62%] lg:bottom-0 lg:left-0 lg:right-0 lg:border-t border-slate-100 lg:pt-6 flex flex-col justify-between animate-reveal delay-300 items-center lg:items-start">
+<div class="hidden lg:block marker -top-[2.5px] -left-[2.5px]"></div>
+<div class="hidden lg:block marker -top-[2.5px] -right-[2.5px]"></div>
+<div class="absolute top-[-1px] left-0 right-0 h-[1px] overflow-hidden hidden lg:block">
+<div class="beam-h" style="animation: beam-h 5s infinite;"></div>
+</div>
+<div class="lg:text-left text-center w-full overflow-hidden">
+<p class="text-[10px] font-semibold tracking-widest text-slate-400 uppercase mb-6 pl-1">Convênios Aceitos</p>
+<div class="relative w-full max-w-[320px] lg:max-w-[360px] mx-auto lg:mx-0 h-[40px] flex items-center mask-linear-fade">
+<div class="flex gap-12 items-center w-max animate-marquee will-change-transform">
+<div class="text-slate-400 font-semibold text-lg flex items-center gap-2"><span class="iconify w-6 h-6" data-icon="solar:shield-check-linear"></span>AETNA</div>
+<div class="text-slate-400 font-semibold text-lg flex items-center gap-2"><span class="iconify w-6 h-6" data-icon="solar:heart-pulse-linear"></span>CIGNA</div>
+<div class="text-slate-400 font-semibold text-lg flex items-center gap-2"><span class="iconify w-6 h-6" data-icon="solar:add-square-linear"></span>BLUECROSS</div>
+<div class="text-slate-400 font-semibold text-lg flex items-center gap-2"><span class="iconify w-6 h-6" data-icon="solar:graph-up-linear"></span>UNITED</div>
+<div class="text-slate-400 font-semibold text-lg flex items-center gap-2"><span class="iconify w-6 h-6" data-icon="solar:shield-check-linear"></span>AETNA</div>
+</div>
+</div>
+</div>
+<div class="pb-1 mt-6 lg:mt-0">
+<div class="flex items-center gap-2 mb-2">
+<span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+<span class="text-xs text-slate-500">Clínicas em Operação</span>
+</div>
+</div>
+</div>
+</div>
+<!-- hero-image -->
+<div class="relative order-3 w-full h-64 sm:h-80 lg:absolute lg:left-[62%] lg:right-[6%] lg:top-0 lg:h-[62%] lg:border-l lg:w-auto border-slate-100 overflow-hidden group animate-reveal delay-200">
+<div class="absolute top-0 bottom-0 left-[-1px] w-[1px] overflow-hidden z-20 hidden lg:block"><div class="beam-v" style="animation: beam-v 4s infinite;"></div></div>
+<div class="hidden lg:block marker -top-[2.5px] -left-[2.5px]"></div>
+<div class="hidden lg:block marker -top-[2.5px] -right-[2.5px]"></div>
+<img alt="Laboratório Médico" class="group-hover:scale-105 transition-transform duration-1000 ease-out w-full h-full object-cover" src="assets/9f023d8e-7464-4eea-9789-18f1b0_f8655a97e45a.webp"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent"></div>
+<div class="absolute bottom-6 left-6 z-20 bg-white/90 backdrop-blur border border-slate-200 p-3 rounded shadow-sm">
+<span class="iconify w-6 h-6 text-slate-700" data-icon="solar:test-tube-linear"></span>
+</div>
+</div>
+<!-- hero-card -->
+<div class="relative order-4 p-6 flex items-center justify-center animate-reveal delay-300 lg:p-0 lg:absolute lg:right-[6%] lg:top-[62%] lg:bottom-[6%] lg:border-l lg:border-t lg:border-slate-100 lg:left-[62%]">
+<div class="absolute top-[-1px] left-0 right-0 h-[1px] overflow-hidden z-20 hidden lg:block"><div class="beam-h" style="animation: beam-h 6s infinite reverse;"></div></div>
+<div class="absolute top-0 bottom-0 left-[-1px] w-[1px] overflow-hidden z-20 hidden lg:block"><div class="beam-v" style="animation: beam-v 6s infinite 2s;"></div></div>
+<div class="flex flex-col bg-white w-full h-full lg:rounded-none rounded-sm pt-8 pr-8 pb-8 pl-8 relative shadow-lg shadow-slate-200/50 justify-between transition-all duration-500 border border-slate-100 lg:border-none" id="card-wrapper">
+<div class="flex items-start justify-between relative z-10 min-h-[60px]">
+<div class="transition-all duration-300 ease-out">
+<div class="flex items-center gap-2 text-teal-600 mb-2">
+<span class="iconify w-4 h-4" data-icon="solar:user-check-linear"></span>
+<span class="text-[10px] font-semibold uppercase tracking-widest">Portal</span>
+</div>
+<h3 class="text-xl font-semibold leading-tight tracking-tight text-slate-900">Próxima Consulta</h3>
+</div>
+<div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400">
+<span class="iconify w-6 h-6" data-icon="solar:calendar-add-linear"></span>
+</div>
+</div>
+<div class="relative z-10 flex flex-col justify-end flex-1 mt-6"><p class="text-sm text-slate-500 font-medium leading-relaxed mb-4 border-l-2 border-teal-100 pl-3">Dra. Sarah Jenkins
+<span class="text-slate-400 font-normal">Cardiologia • Amanhã, 10:00</span>
+</p>
+<div class="flex items-center justify-between border-t border-slate-100 pt-4">
+<div class="flex -space-x-2">
+<span class="w-2 h-2 rounded-full bg-slate-200"></span>
+<span class="w-2 h-2 rounded-full bg-slate-300"></span>
+</div>
+<button class="text-xs font-semibold uppercase tracking-wide text-teal-600 hover:text-teal-800 transition-colors flex items-center gap-1">Detalhes
+<span class="iconify w-3.5 h-3.5" data-icon="solar:arrow-right-linear"></span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- impact-report -->
+<section class="w-full relative z-10 bg-white border-b border-slate-100 overflow-hidden">
+<div class="lg:px-[6%] lg:py-32 max-w-[1600px] mr-auto ml-auto pt-24 pr-6 pb-24 pl-6 relative">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+<div class="relative z-10 scroll-reveal">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-100 text-teal-700 text-[10px] font-bold uppercase tracking-widest mb-6">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+</span>
+Relatório de Impacto ao Vivo
+</div>
+<h2 class="text-4xl md:text-5xl lg:text-6xl font-semibold text-slate-900 tracking-tight leading-[1.05] mb-6">Cuidado guiado por dados,
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-emerald-500">resultados mensuráveis.</span>
+</h2>
+<p class="text-lg text-slate-500 font-light leading-relaxed mb-10 max-w-lg">Monitoramos resultados continuamente para garantir o mais alto padrão de cuidado. Nossos modelos preditivos ajudam a prevenir complicações antes que elas ocorram, definindo um novo patamar para a segurança do paciente.</p>
+<div class="grid grid-cols-2 gap-x-12 gap-y-10">
+<div class="group cursor-default">
+<div class="text-4xl font-semibold text-slate-900 tracking-tight mb-2 group-hover:text-teal-600 transition-colors">99,9%</div>
+<div class="h-0.5 w-12 bg-slate-200 mb-3 group-hover:w-full group-hover:bg-teal-500 transition-all duration-700 ease-out"></div>
+<p class="text-sm text-slate-500 leading-snug">Taxa de precisão diagnóstica em todos os departamentos</p>
+</div>
+<div class="group cursor-default">
+<div class="text-4xl font-semibold text-slate-900 tracking-tight mb-2 group-hover:text-teal-600 transition-colors">35%</div>
+<div class="h-0.5 w-12 bg-slate-200 mb-3 group-hover:w-full group-hover:bg-teal-500 transition-all duration-700 ease-out"></div>
+<p class="text-sm text-slate-500 leading-snug">Recuperação mais rápida em comparação à média nacional</p>
+</div>
+</div>
+</div>
+<!-- chart-card -->
+<div class="relative group scroll-reveal delay-200">
+<div class="absolute -inset-4 bg-gradient-to-r from-teal-50 to-slate-50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl"></div>
+<div class="relative bg-white border border-slate-200 rounded-sm p-6 lg:p-8 shadow-sm transition-all duration-500 hover:shadow-lg hover:border-teal-100">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-base font-semibold text-slate-900 tracking-tight">Trajetória de Recuperação</h3>
+<p class="text-[10px] text-slate-400 mt-1 font-mono uppercase tracking-widest">DIAS MÉDIOS ATÉ A ALTA</p>
+</div>
+<div class="flex items-center gap-4 text-[10px] font-bold tracking-wider uppercase">
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-teal-500"></span><span class="text-slate-600">VITALIS</span></div>
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-200"></span><span class="text-slate-400">Média Nacional</span></div>
+</div>
+</div>
+<div class="w-full h-[320px]">
+<canvas height="640" id="recoveryChart" style="display: block; box-sizing: border-box; height: 320px; width: 480.9px;" width="961"></canvas>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-emerald-50 text-emerald-600 rounded-full">
+<span class="iconify w-4 h-4" data-icon="solar:graph-up-linear"></span>
+</div>
+<div class="text-sm">
+<span class="font-semibold text-slate-900 block leading-tight">Aumento de 12%</span>
+<span class="text-slate-500 text-xs font-normal">no fluxo de pacientes</span>
+</div>
+</div>
+<button class="group/btn flex items-center gap-2 text-xs font-bold text-teal-600 uppercase tracking-wider hover:text-teal-700 transition-colors">Ver Relatório
+<span class="iconify w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" data-icon="solar:arrow-right-linear"></span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- features -->
+<section class="lg:py-32 bg-slate-50/50 w-full z-10 border-slate-100 border-t pt-24 pb-24 relative">
+<div class="absolute inset-0 pointer-events-none hidden lg:block z-0">
+<div class="absolute top-0 bottom-0 left-[6%] w-[1px] bg-slate-200/50"></div>
+<div class="absolute top-0 bottom-0 left-[28%] w-[1px] bg-slate-200/50"></div>
+<div class="absolute top-0 bottom-0 left-[62%] w-[1px] bg-slate-200/50"></div>
+<div class="absolute top-0 bottom-0 right-[6%] w-[1px] bg-slate-200/50"></div>
+</div>
+<div class="relative z-10 lg:px-[6%] max-w-[1600px] mr-auto ml-auto pr-6 pl-6">
+<div class="mb-20 lg:mb-24 max-w-4xl">
+<h2 class="lg:text-7xl text-4xl font-medium text-slate-900 tracking-tight mb-8 scroll-reveal">Infraestrutura de Saúde <span class="text-slate-300">Holística.</span></h2>
+<div class="scroll-reveal delay-100 grid grid-cols-1 lg:grid-cols-2 gap-12">
+<p class="text-lg text-slate-500 font-light leading-relaxed">Da atenção primária a tratamentos especializados avançados, a VITALIS conecta o conforto do paciente à inovação médica.</p>
+</div>
+</div>
+<!-- bento-grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6" data-bento-grid>
+<div class="scroll-reveal delay-200 col-span-1 lg:col-span-2 group hover:bg-white transition-all duration-300 flex flex-col hover:border-slate-300 h-full border-slate-200 border rounded-sm p-8 relative bg-white/40 backdrop-blur-sm justify-between overflow-hidden shadow-sm hover:shadow-md">
+<div class="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100" style="background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(15, 23, 42, 0.03), transparent 40%); z-index: 0;"></div>
+<div class="h-12 w-12 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 mb-8 relative z-10">
+<span class="iconify w-6 h-6" data-icon="solar:stethoscope-linear"></span>
+</div>
+<div class="relative z-10">
+<h3 class="text-lg font-semibold text-slate-900 mb-2 tracking-tight">Atenção Primária</h3>
+<p class="text-sm text-slate-500 font-normal leading-relaxed">Check-ups anuais completos, exames preventivos e planos de saúde personalizados.</p>
+</div>
+</div>
+<div class="scroll-reveal delay-300 col-span-1 lg:col-span-2 group hover:bg-white transition-all duration-300 flex flex-col hover:border-slate-300 h-full border-slate-200 border rounded-sm p-8 relative bg-white/40 backdrop-blur-sm justify-between overflow-hidden shadow-sm hover:shadow-md">
+<div class="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100" style="background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(15, 23, 42, 0.03), transparent 40%); z-index: 0;"></div>
+<div class="h-12 w-12 bg-sky-50 rounded-lg flex items-center justify-center text-sky-600 mb-8 relative z-10">
+<span class="iconify w-6 h-6" data-icon="solar:document-medicine-linear"></span>
+</div>
+<div class="relative z-10">
+<h3 class="text-lg font-semibold text-slate-900 mb-2 tracking-tight">Prontuário Digital</h3>
+<p class="text-sm text-slate-500 font-normal leading-relaxed">Acesso seguro e instantâneo ao seu histórico médico, exames e prescrições pelo nosso portal.</p>
+</div>
+</div>
+<div class="scroll-reveal delay-500 col-span-1 lg:col-span-2 group hover:bg-white transition-all duration-300 flex flex-col hover:border-slate-300 h-full border-slate-200 border rounded-sm p-8 relative bg-white/40 backdrop-blur-sm justify-between overflow-hidden shadow-sm hover:shadow-md">
+<div class="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100" style="background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(15, 23, 42, 0.03), transparent 40%); z-index: 0;"></div>
+<div class="h-12 w-12 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 mb-8 relative z-10">
+<span class="iconify w-6 h-6" data-icon="solar:test-tube-linear"></span>
+</div>
+<div class="relative z-10">
+<h3 class="text-lg font-semibold text-slate-900 mb-2 tracking-tight">Diagnósticos Avançados</h3>
+<p class="text-sm text-slate-500 font-normal leading-relaxed">Imagens de última geração e laboratório no local para diagnósticos rápidos e precisos.</p>
+</div>
+</div>
+<div class="scroll-reveal delay-200 col-span-1 lg:col-span-3 group hover:bg-white transition-all duration-300 flex flex-col min-h-[300px] hover:border-slate-300 border-slate-200 border rounded-sm p-8 relative bg-white/40 backdrop-blur-sm justify-between overflow-hidden shadow-sm hover:shadow-md">
+<div class="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100" style="background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(15, 23, 42, 0.03), transparent 40%); z-index: 0;"></div>
+<div class="absolute top-8 right-8 text-slate-200 group-hover:text-teal-100 transition-colors">
+<span class="iconify w-16 h-16" data-icon="solar:monitor-camera-linear"></span>
+</div>
+<div class="mt-auto relative z-10">
+<h3 class="text-xl font-semibold text-slate-900 mb-3 tracking-tight">Telemedicina Integrada</h3>
+<p class="text-sm text-slate-500 font-normal leading-relaxed max-w-md">Conecte-se com seu médico no conforto da sua casa. Consultas em vídeo de alta definição permitem retornos de rotina sem deslocamento.</p>
+<div class="mt-8 flex items-center gap-4">
+<div class="text-xs font-mono text-teal-700 bg-teal-50 border border-teal-100 px-2 py-1 rounded">Compatível com LGPD</div>
+<div class="text-xs font-mono text-slate-400">Vídeo Criptografado</div>
+</div>
+</div>
+</div>
+<div class="scroll-reveal delay-300 col-span-1 lg:col-span-3 group hover:bg-white transition-all duration-300 flex flex-col min-h-[300px] hover:border-slate-300 border-slate-200 border rounded-sm p-8 relative bg-white/40 backdrop-blur-sm justify-between overflow-hidden shadow-sm hover:shadow-md">
+<div class="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100" style="background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(15, 23, 42, 0.03), transparent 40%); z-index: 0;"></div>
+<div class="absolute top-8 right-8 text-slate-200 group-hover:text-sky-100 transition-colors">
+<span class="iconify w-16 h-16" data-icon="solar:users-group-two-rounded-linear"></span>
+</div>
+<div class="mt-auto relative z-10">
+<h3 class="text-xl font-semibold text-slate-900 mb-3 tracking-tight">Rede de Especialistas</h3>
+<p class="text-sm text-slate-500 font-normal leading-relaxed max-w-md">Encaminhamentos diretos para os melhores especialistas da região. Nosso modelo de cuidado coordenado garante que toda a sua equipe médica esteja alinhada.</p>
+<div class="mt-8 flex -space-x-2 overflow-hidden">
+<img alt="" class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="assets/photo-1612349317150-e413f6a5b1_a4fe4a0f4738.avif"/>
+<img alt="" class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="assets/photo-1612531386530-97286d97c2_02f597743435.avif"/>
+<div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-600">+12</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- testimonials -->
+<section class="overflow-hidden lg:py-32 w-full z-20 pt-24 pb-24 relative bg-white">
+<div class="absolute inset-0 w-full h-full pointer-events-none hidden lg:block">
+<div class="grid-line-v" style="left: 6%"></div>
+<div class="grid-line-v" style="left: 28%"></div>
+<div class="grid-line-v" style="left: 62%"></div>
+<div class="grid-line-v" style="right: 6%"></div>
+<div class="grid-line-h" style="top: 0"></div>
+<div class="grid-line-h" style="bottom: 0"></div>
+</div>
+<div class="lg:px-[6%] max-w-[1600px] z-10 mr-auto ml-auto pr-6 pl-6 relative">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 mb-8">
+<div class="lg:col-span-7 flex flex-col gap-6">
+<div class="border border-slate-100 bg-slate-50/50 rounded-sm p-10 lg:p-12 relative flex flex-col justify-center min-h-[240px]">
+<h2 class="leading-[0.95] lg:text-5xl text-4xl font-semibold text-slate-900 tracking-tight z-10 mb-2 relative">Cuidado que coloca <span class="text-slate-300">você em primeiro lugar.</span></h2>
+</div>
+<div class="lg:h-[500px] overflow-hidden group h-[420px] border-slate-200 border rounded-sm relative shadow-sm">
+<img alt="Consulta médico-paciente" class="transition-transform duration-1000 group-hover:scale-105 w-full h-full object-cover absolute top-0 left-0" src="assets/7d3d7aa0-9b80-49e5-94f8-4b8527_81892e210b37.jpg"/>
+<div class="absolute bottom-10 right-10 text-right bg-white/90 backdrop-blur-sm p-4 rounded shadow-lg">
+<span class="block text-4xl font-bold text-slate-900 tracking-tight">98%</span>
+<span class="block text-slate-500 font-mono text-xs uppercase tracking-widest mt-1">Satisfação dos Pacientes</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-5 flex flex-col gap-6">
+<div class="bg-white p-10 rounded-sm border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-300 h-full flex flex-col justify-between">
+<div class="">
+<div class="flex gap-1 text-yellow-400 mb-6">
+<span class="iconify w-5 h-5" data-icon="solar:star-bold"></span>
+<span class="iconify w-5 h-5" data-icon="solar:star-bold"></span>
+<span class="iconify w-5 h-5" data-icon="solar:star-bold"></span>
+<span class="iconify w-5 h-5" data-icon="solar:star-bold"></span>
+<span class="iconify w-5 h-5" data-icon="solar:star-bold"></span>
+</div>
+<p class="text-lg font-light leading-relaxed mb-8 text-slate-600">"O nível de atenção aos detalhes na VITALIS é incomparável. Em nenhum momento me senti com pressa, e a Dra. Emily realmente ouviu minhas preocupações. O aplicativo torna o agendamento muito simples."</p>
+</div>
+<div class="flex items-center gap-4 border-t border-slate-100 pt-6">
+<div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" src="assets/5d0296a8-c467-44ef-9d51-ce4ee3_70f671a6e3f5.webp"/>
+</div>
+<div>
+<h4 class="font-medium text-slate-900 text-sm">Michael Ross</h4>
+<span class="text-xs text-slate-400">Paciente desde 2022</span>
+</div>
+</div>
+</div>
+<div class="bg-white p-8 rounded-sm border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-300">
+<div class="flex gap-1 text-yellow-400 mb-4">
+<span class="iconify w-[18px] h-[18px]" data-icon="solar:star-bold"></span>
+<span class="iconify w-[18px] h-[18px]" data-icon="solar:star-bold"></span>
+<span class="iconify w-[18px] h-[18px]" data-icon="solar:star-bold"></span>
+<span class="iconify w-[18px] h-[18px]" data-icon="solar:star-bold"></span>
+<span class="iconify w-[18px] h-[18px]" data-icon="solar:star-bold"></span>
+</div>
+<p class="text-base font-normal leading-relaxed mb-6 text-slate-600">"As instalações são impecáveis e modernas. Ter o laboratório no local me poupou de uma viagem extra. Super recomendo."</p>
+<div class="flex items-center gap-4 border-t border-slate-100 pt-4">
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" src="assets/c6ec4622-d827-4c9e-9744-0c24c8_11a0e78f541c.webp"/>
+</div>
+<div>
+<h4 class="font-medium text-slate-900 text-sm">Sarah Jay</h4>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- cta-banner -->
+<div class="bg-slate-900 rounded-sm p-8 lg:px-12 lg:py-10 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group shadow-2xl shadow-slate-300/50">
+<div class="absolute inset-0 bg-gradient-to-r from-teal-900/50 to-transparent pointer-events-none"></div>
+<div class="relative z-10 text-center md:text-left">
+<h3 class="text-3xl font-medium text-white tracking-tight mb-2">Pronto para priorizar sua saúde?</h3>
+<p class="text-slate-400 text-base font-light">Junte-se a mais de 10.000 pacientes que confiam na VITALIS.</p>
+</div>
+<button class="relative z-10 bg-white text-slate-900 pl-8 pr-6 py-4 rounded font-semibold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-4 group/btn shadow-lg">Agendar Visita
+<div class="w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+<span class="iconify w-3.5 h-3.5" data-icon="solar:arrow-right-linear"></span>
+</div>
+</button>
+</div>
+</div>
+</section>
+
+<!-- faq -->
+<section class="z-20 w-full border-t border-slate-100 relative bg-white">
+<div class="lg:px-[6%] max-w-[1600px] mr-auto ml-auto pr-6 pl-6 pt-24 pb-24">
+<div class="max-w-3xl">
+<h3 class="text-xs font-mono text-slate-500 uppercase mb-8">Perguntas Frequentes</h3>
+<div class="space-y-0">
+<div class="group border-b border-slate-100">
+<button class="w-full pt-6 pb-6 flex items-center justify-between cursor-pointer text-left focus:outline-none" data-faq-toggle>
+<h3 class="text-lg font-medium text-slate-900 group-hover:text-teal-600 transition-colors">Vocês aceitam meu plano de saúde?</h3>
+<span class="iconify w-5 h-5 text-slate-400 group-hover:text-teal-600 transition-colors" data-icon="solar:add-circle-linear"></span>
+</button>
+<div class="hidden pb-8 text-slate-500 font-light leading-relaxed animate-reveal">Aceitamos a maioria dos principais convênios, incluindo Aetna, Cigna, BlueCross BlueShield e UnitedHealthcare. Entre em contato com nossa recepção para verificar seu plano específico.</div>
+</div>
+<div class="group border-b border-slate-100">
+<button class="w-full pt-6 pb-6 flex items-center justify-between cursor-pointer text-left focus:outline-none" data-faq-toggle>
+<h3 class="text-lg font-medium text-slate-900 group-hover:text-teal-600 transition-colors">Como acesso meus resultados de exames?</h3>
+<span class="iconify w-5 h-5 text-slate-400 group-hover:text-teal-600 transition-colors" data-icon="solar:add-circle-linear"></span>
+</button>
+<div class="hidden pb-8 text-slate-500 font-light leading-relaxed animate-reveal">Todos os resultados de exames são publicados no Portal do Paciente VITALIS imediatamente após a revisão pelo seu médico. Você receberá uma notificação segura por e-mail quando estiverem prontos.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- footer -->
+<footer class="relative w-full border-t border-slate-100 bg-slate-50 z-20 pt-24 pb-12">
+<div class="max-w-[1600px] mx-auto px-6 lg:px-[6%]">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-24">
+<div class="lg:col-span-3">
+<div class="flex items-center gap-2 text-slate-900 mb-6">
+<div class="w-6 h-6 bg-slate-200 text-slate-700 rounded flex items-center justify-center">
+<span class="iconify w-3.5 h-3.5" data-icon="solar:add-square-linear"></span>
+</div>
+<span class="font-bold tracking-tight">VITALIS</span>
+</div>
+<p class="text-sm text-slate-500 leading-relaxed">Reimaginando a experiência do paciente por meio de tecnologia, design e empatia.</p>
+</div>
+<div class="lg:col-span-2">
+<h4 class="text-xs font-mono text-slate-400 uppercase mb-6">Serviços</h4>
+<ul class="space-y-4">
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Atenção Primária</a></li>
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Cardiologia</a></li>
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Pediatria</a></li>
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Pronto Atendimento</a></li>
+</ul>
+</div>
+<div class="lg:col-span-2">
+<h4 class="text-xs font-mono text-slate-400 uppercase mb-6">Pacientes</h4>
+<ul class="space-y-4">
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Acessar Portal</a></li>
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Pagar Conta</a></li>
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Convênios</a></li>
+<li><a class="text-sm text-slate-500 hover:text-teal-600 transition-colors" href="#">Política de Privacidade</a></li>
+</ul>
+</div>
+<div class="lg:col-span-5 flex flex-col sm:flex-row gap-4 lg:justify-end items-start">
+<div class="bg-white border border-slate-200 p-6 rounded-sm w-full sm:w-64">
+<span class="block text-xs font-mono text-slate-400 mb-2">CONTATO DE EMERGÊNCIA</span>
+<span class="block text-2xl font-semibold text-slate-900 mb-1">555-0123</span>
+<span class="block text-sm text-slate-500">Triagem 24/7</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-slate-200 gap-4">
+<p class="text-xs text-slate-400">© 2024 VITALIS Health Group. Todos os direitos reservados.</p>
+<div class="flex gap-4">
+<a class="text-slate-400 hover:text-slate-600 transition-colors" href="#"><span class="iconify w-4 h-4" data-icon="ri:twitter-x-line"></span></a>
+<a class="text-slate-400 hover:text-slate-600 transition-colors" href="#"><span class="iconify w-4 h-4" data-icon="ri:facebook-circle-line"></span></a>
+<a class="text-slate-400 hover:text-slate-600 transition-colors" href="#"><span class="iconify w-4 h-4" data-icon="ri:instagram-line"></span></a>
+</div>
+</div>
+</div>
+</footer>
+
+<!-- js -->
+<!-- Chart.js library — powers the Recovery Trajectory line chart in the impact-report section -->
+<script src="assets/chart_ba9eca532d10.js"></script>
+<!-- Recovery chart configuration — initializes the Chart.js canvas with VITALIS vs national data -->
+<script src="assets/js/recovery-chart.js"></script>
+<!-- Page interactions — Lucide icon render, mobile menu toggle, scroll-reveal observer, FAQ accordion, bento mouse-glow, Unicorn Studio bg loader, image fallback handler -->
+<script src="assets/js/interactions.js"></script>
+</body>
+</html>

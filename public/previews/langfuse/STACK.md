@@ -1,0 +1,9 @@
+- **Tailwind CSS** — utility-first CSS framework (loaded as a runtime bundle from `assets/resource_3fa48481346f.es`) used for all layout, color, spacing, and responsive styling.
+- **Iconify Web Component** (`iconify-icon`) — custom element runtime from `assets/iconify-icon_e19829e7f0e8.js` that renders icons declared via `<iconify-icon icon="...">`.
+- **Solar Icon Set** — icon family used through Iconify for every UI icon (e.g. `solar:infinity-bold`, `solar:eye-linear`, `solar:rocket-2-linear`).
+- **Inter** — primary sans-serif typeface, served via the Google Fonts CSS bundle `assets/css2_1aa00095e743.css` and locally hosted `.woff2` files.
+- **Space Mono** — monospaced typeface used for code snippets, terminal output, badges, and stat captions.
+- **IntersectionObserver API** — native browser API used to add the `.visible` class to `.feature-card` elements as they enter the scroll container.
+- **CSS Backdrop Filter** — used by the `.glass-panel` and sticky header to create the frosted-glass effect.
+- **CSS Custom Keyframe Animations** — `drift` (blob movement) and `fadeIn` (tab transitions), plus Tailwind utility `animate-pulse` and `animate-bounce`.
+- **Vercel Grainy Gradients noise SVG** — referenced via `https://grainy-gradients.vercel.app/noise.svg` to overlay film grain on the page.

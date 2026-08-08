@@ -1,0 +1,8 @@
+- **Tailwind CSS (Play CDN)** — utility-first CSS framework loaded via `assets/resource_3fa48481346f.js`, used for layout, spacing, color, and responsive utilities throughout the page
+- **Iconify** — icon runtime loaded via `assets/iconify_654a1ef798a3.js` that renders all `<span class="iconify" data-icon="lucide:...">` elements using the Lucide icon set
+- **Google Fonts (Montserrat, Open Sans, Prompt)** — typography served via the locally bundled `assets/css2_ac990486f183.css` and the `.woff2` font files in `assets/`
+- **CSS backdrop-filter / glassmorphism** — native CSS used to create the `.glass-panel` liquid-glass effect (blur + saturate)
+- **CSS keyframe animations** — handcrafted `float`, `scroll`, `slide-right`, `slide-left`, and `pulse-soft` animations powering ambient blobs, marquee, and motion banners
+- **CSS Grid + custom properties** — used by the `.stack-section` carousel to coordinate scale, opacity, offset, and z-order across 4 stacked cards via `--_offset`, `--_scale`, `--_opacity`, `--_order` variables
+- **Vanilla JavaScript** — implements custom cursor, preloader bar, parallax engine (rAF-throttled), scroll-reveal observer, animated number counters, stack-carousel auto-rotation with dot navigation, services tab switcher, and portfolio category filter
+- **AVIF imagery** — modern compressed photos in `assets/` used for hero parallax background and gallery items

@@ -1,0 +1,10 @@
+- **Tailwind CSS** (CDN runtime) — utility-first CSS framework used for layout, typography, spacing, and responsive utilities throughout the page
+- **Google Fonts** — serves the Syncopate (display) and Manrope (body) typefaces via preconnect and stylesheet links
+- **Syncopate** — display typeface used for the brand mark, hero headlines, section titles, and CTA
+- **Manrope** — body typeface used for paragraphs, navigation, and UI text
+- **GSAP 3.12.5** — animation engine driving the preloader timeline, hero text reveal, image parallax, card-stack scaling, and footer parallax
+- **GSAP ScrollTrigger** — scroll-driven animation plugin coordinating parallax, word-by-word reveal, and the sticky card-stack effect
+- **Lenis 1.0.33** (Studio Freight) — smooth-scroll library originally wired up but neutralized by the offline scroll-fallback shim
+- **Custom scroll-fallback shim** — inline script that disables Lenis and forces native scroll for offline compatibility, also hiding the preloader
+- **Custom image-fallback handler** — inline script that swaps broken `<img>` sources for hashed Supabase URLs at runtime
+- **SVG noise filter** — inline data-URI feTurbulence pattern used as a full-page grain overlay

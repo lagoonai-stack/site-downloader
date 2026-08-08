@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baixar site · Site Downloader</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="full-page">
+  <header class="toolbar">
+    <div class="brand-mark">
+      <span class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <h1>Site Downloader</h1>
+    </div>
+    <nav>
+      <a href="/">Templates</a>
+      <a href="/downloader.html" class="active">Baixar site personalizado</a>
+    </nav>
+    <button class="logout-btn" id="btnLogout">Sair</button>
+  </header>
+
+  <div style="display:flex;align-items:center;justify-content:center;padding:48px 24px;">
+    <div class="card">
+      <p class="sub" style="margin-top:0;">Informe a URL e baixe HTML, CSS, JS e imagens em um .zip</p>
+
+      <div class="field">
+        <input id="url" type="url" placeholder="https://exemplo.com" />
+      </div>
+
+      <button id="btn">Baixar site</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

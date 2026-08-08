@@ -1,0 +1,7 @@
+- **Tailwind CSS** (resource_3fa48481346f.js) — utility-first CSS framework used for layout, spacing, typography and color across the entire page
+- **Lucide** (v0.260.0 via unpkg CDN) — icon library rendering shield-check, wand-2, terminal, rocket and globe-2 icons
+- **Custom CSS effects** (assets/css/effects.css) — glow, hover, float, scale-in, fade-in, slide-up, ambient-light keyframes and 3D card transforms
+- **Vanilla JavaScript** (assets/js/interactions.js) — page download helper, Lucide icon bootstrap and snake-style custom cursor with 18 trailing segments
+- **Unsplash** — external imagery referenced via CSS background-image URLs
+- **Inline SVG** — single currentColor data-grid icon used in the floating stats badge
+- **Static SVG asset** (assets/images/svg/logo-server.svg) — logo glyph extracted from the header badge
