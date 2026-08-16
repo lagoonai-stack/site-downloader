@@ -2,8 +2,8 @@ const btn = document.getElementById("btn");
 const status = document.getElementById("status");
 
 document.getElementById("btnLogout").addEventListener("click", async () => {
-  await fetch("/api/auth/logout", { method: "POST" });
-  window.location.href = "/login.html";
+  await fetch("api/auth/logout", { method: "POST" });
+  window.location.href = "login.html";
 });
 
 btn.addEventListener("click", async () => {
@@ -13,7 +13,7 @@ btn.addEventListener("click", async () => {
   btn.disabled = true;
   status.textContent = "Baixando... (pode levar alguns segundos)";
   try {
-    const resp = await fetch(`/download?url=${encodeURIComponent(url)}`);
+    const resp = await fetch(`download?url=${encodeURIComponent(url)}`);
     if (!resp.ok) throw new Error(await resp.text());
     const blob = await resp.blob();
     const a = document.createElement("a");

@@ -22,9 +22,9 @@ let currentEmail = "";
 
   status.textContent = "Confirmando login...";
   try {
-    await postJson("/api/auth/session-from-token", { access_token: accessToken });
+    await postJson("api/auth/session-from-token", { access_token: accessToken });
     status.textContent = "Login realizado! Redirecionando...";
-    window.location.href = "/";
+    window.location.href = "./";
   } catch (err) {
     status.textContent = err.message;
   }
@@ -49,7 +49,7 @@ document.getElementById("btnRequest").addEventListener("click", async (e) => {
   btn.disabled = true;
   status.textContent = "Enviando...";
   try {
-    const data = await postJson("/api/auth/login", { email: currentEmail });
+    const data = await postJson("api/auth/login", { email: currentEmail });
     status.textContent = data.message;
     stepEmail.classList.add("hidden");
     stepCode.classList.remove("hidden");
@@ -69,9 +69,9 @@ document.getElementById("btnVerify").addEventListener("click", async (e) => {
   btn.disabled = true;
   status.textContent = "Verificando...";
   try {
-    await postJson("/api/auth/verify", { email: currentEmail, code });
+    await postJson("api/auth/verify", { email: currentEmail, code });
     status.textContent = "Login realizado! Redirecionando...";
-    window.location.href = "/";
+    window.location.href = "./";
   } catch (err) {
     status.textContent = err.message;
     btn.disabled = false;

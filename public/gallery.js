@@ -7,18 +7,18 @@ let DATA = [];
 let state = { cat: "todos", q: "" };
 
 document.getElementById("btnLogout").addEventListener("click", async () => {
-  await fetch("/api/auth/logout", { method: "POST" });
-  window.location.href = "/login.html";
+  await fetch("api/auth/logout", { method: "POST" });
+  window.location.href = "login.html";
 });
 
 function cardHtml(d) {
-  const previewHref = d.liveUrl || `/${d.previewPath}`;
+  const previewHref = d.liveUrl || `${d.previewPath}`;
   const actionBtn = d.liveUrl
     ? `<button class="action-btn install-btn" data-url="${d.liveUrl}" data-name="${d.slug}">Instalar</button>`
-    : `<a class="action-btn preview-btn" href="/${d.previewPath}" target="_blank" rel="noopener">Prévia</a>`;
+    : `<a class="action-btn preview-btn" href="${d.previewPath}" target="_blank" rel="noopener">Prévia</a>`;
   return `<article class="gcard">
     <a class="thumb-wrap" href="${previewHref}" target="_blank" rel="noopener" title="${d.name}">
-      <img loading="lazy" src="/${d.thumb}" alt="${d.name}" onerror="this.style.opacity=.15">
+      <img loading="lazy" src="${d.thumb}" alt="${d.name}" onerror="this.style.opacity=.15">
     </a>
     <div class="meta">
       <div class="meta-left">
@@ -73,7 +73,7 @@ grid.addEventListener("click", async (e) => {
   btn.textContent = "Baixando...";
   statusEl.textContent = "";
   try {
-    const resp = await fetch(`/download?url=${encodeURIComponent(url)}`);
+    const resp = await fetch(`download?url=${encodeURIComponent(url)}`);
     if (!resp.ok) throw new Error(await resp.text());
     const blob = await resp.blob();
     const a = document.createElement("a");
@@ -94,7 +94,7 @@ grid.addEventListener("click", async (e) => {
 });
 
 (async function init() {
-  const resp = await fetch("/catalog.json");
+  const resp = await fetch("catalog.json");
   DATA = await resp.json();
   render();
 })();

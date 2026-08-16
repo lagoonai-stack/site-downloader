@@ -14,9 +14,15 @@ import { build as esbuildBuild } from "esbuild";
 import authRoutes from "./authRoutes.js";
 import kiwifyWebhook from "./kiwifyWebhook.js";
 import { requireActiveSubscriber } from "./requireActiveSubscriber.js";
+import { BASE_PATH } from "./basePath.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+async function sendHtmlWithBase(res, filePath) {
+  const html = await fsp.readFile(filePath, "utf8");
+  res.type("html").send(html.replace("<head>", `<head>\n  <base href="${BASE_PATH}/" />`));
+}
 
 // Atras do proxy reverso do Dokploy (Traefik): confia so no primeiro
 // hop pra pegar o IP real do cliente via X-Forwarded-For, sem o que
@@ -41,7 +47,7 @@ app.use("/webhooks", kiwifyWebhook);
 app.use("/api/auth", authRoutes);
 
 app.get("/login.html", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "login.html"))
+  sendHtmlWithBase(res, path.join(__dirname, "public", "login.html"))
 );
 app.get("/login.js", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "login.js"))
@@ -51,6 +57,12 @@ app.get("/styles.css", (req, res) =>
 );
 
 app.use(requireActiveSubscriber);
+
+// index.html e downloader.html precisam do <base> injetado (ver sendHtmlWithBase) — por
+// isso ganham rota explícita aqui, antes do express.static, que continua servindo o resto
+// (JS, CSS, catalog.json, previews, thumbs) sem alteração.
+app.get("/", (req, res) => sendHtmlWithBase(res, path.join(__dirname, "public", "index.html")));
+app.get("/downloader.html", (req, res) => sendHtmlWithBase(res, path.join(__dirname, "public", "downloader.html")));
 
 app.use(express.static(path.join(__dirname, "public")));
 
