@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
-import cookieParser from "cookie-parser";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import archiver from "archiver";
@@ -11,18 +10,11 @@ import { promises as fsp } from "fs";
 import os from "os";
 import { build as esbuildBuild } from "esbuild";
 
-import authRoutes from "./authRoutes.js";
 import kiwifyWebhook from "./kiwifyWebhook.js";
-import { requireActiveSubscriber } from "./requireActiveSubscriber.js";
-import { BASE_PATH } from "./basePath.js";
+import { requireBraboSpaceUser } from "./requireBraboSpaceUser.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-
-async function sendHtmlWithBase(res, filePath) {
-  const html = await fsp.readFile(filePath, "utf8");
-  res.type("html").send(html.replace("<head>", `<head>\n  <base href="${BASE_PATH}/" />`));
-}
 
 // Atras do proxy reverso do Dokploy (Traefik): confia so no primeiro
 // hop pra pegar o IP real do cliente via X-Forwarded-For, sem o que
@@ -31,40 +23,26 @@ app.set("trust proxy", 1);
 
 // As previas em /previews sao HTML baixado de sites de terceiros (nao
 // gerado por nos) e costuma trazer <script> inline - o CSP padrao do
-// helmet bloquearia essa execucao. A rota ja fica atras do gate de
-// assinante ativo, entao isentar so essa arvore de arquivos estaticos
-// e seguro.
+// helmet bloquearia essa execucao.
 const helmetMiddleware = helmet();
 app.use((req, res, next) => {
   if (req.path.startsWith("/previews/")) return next();
   return helmetMiddleware(req, res, next);
 });
 app.use(express.json({ limit: "100kb" }));
-app.use(cookieParser());
 
 app.use("/webhooks", kiwifyWebhook);
 
-app.use("/api/auth", authRoutes);
+// thumbs/previews sao so espelhos de sites de template ja publicos (a URL real ja aparece em
+// catalog.json) - deixar sem gate evita ter que autenticar toda tag <img>/<a target="_blank">
+// do front. O que de fato importa proteger e a lista completa (catalog.json) e o scraping
+// pesado (/download) - esses dois exigem sessao valida da BraboSpace, ver abaixo.
+app.use("/thumbs", express.static(path.join(__dirname, "public", "thumbs")));
+app.use("/previews", express.static(path.join(__dirname, "public", "previews")));
 
-app.get("/login.html", (req, res) =>
-  sendHtmlWithBase(res, path.join(__dirname, "public", "login.html"))
-);
-app.get("/login.js", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "login.js"))
-);
-app.get("/styles.css", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "styles.css"))
-);
+app.use(requireBraboSpaceUser);
 
-app.use(requireActiveSubscriber);
-
-// index.html e downloader.html precisam do <base> injetado (ver sendHtmlWithBase) — por
-// isso ganham rota explícita aqui, antes do express.static, que continua servindo o resto
-// (JS, CSS, catalog.json, previews, thumbs) sem alteração.
-app.get("/", (req, res) => sendHtmlWithBase(res, path.join(__dirname, "public", "index.html")));
-app.get("/downloader.html", (req, res) => sendHtmlWithBase(res, path.join(__dirname, "public", "downloader.html")));
-
-app.use(express.static(path.join(__dirname, "public")));
+app.get("/catalog.json", (req, res) => res.sendFile(path.join(__dirname, "public", "catalog.json")));
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
