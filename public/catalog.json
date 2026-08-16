@@ -162,7 +162,7 @@
   {
     "slug": "agent.humanacademy",
     "name": "Agent Humanacademy",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/agent.humanacademy.webp",
     "liveUrl": "https://agent.humanacademy/",
     "previewPath": null
@@ -202,7 +202,7 @@
   {
     "slug": "bloomava-creative-93.aura.build",
     "name": "Bloomava Creative",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/bloomava-creative-93.aura.build.webp",
     "liveUrl": "https://bloomava-creative-93.aura.build/",
     "previewPath": null
@@ -226,7 +226,7 @@
   {
     "slug": "elicyon.com",
     "name": "Elicyon",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/elicyon.com.webp",
     "liveUrl": "https://elicyon.com/",
     "previewPath": null
@@ -266,7 +266,7 @@
   {
     "slug": "luxury-real-estate-22.aura.build",
     "name": "Luxury Real Estate",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/luxury-real-estate-22.aura.build.webp",
     "liveUrl": "https://luxury-real-estate-22.aura.build/",
     "previewPath": null
@@ -290,7 +290,7 @@
   {
     "slug": "parallax-clean",
     "name": "Parallax Clean",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/parallax-clean.webp",
     "liveUrl": null,
     "previewPath": "previews/parallax-clean/design-system.html"
@@ -330,7 +330,7 @@
   {
     "slug": "ai-automation-17.aura.build",
     "name": "Ai Automation",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/ai-automation-17.aura.build.webp",
     "liveUrl": "https://ai-automation-17.aura.build/",
     "previewPath": null
@@ -338,7 +338,7 @@
   {
     "slug": "hu169yr",
     "name": "Aurora Motion",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/hu169yr.webp",
     "liveUrl": null,
     "previewPath": "previews/hu169yr/index.html"
@@ -354,7 +354,7 @@
   {
     "slug": "open-source-llm-10.aura.build",
     "name": "Open Source Llm",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/open-source-llm-10.aura.build.webp",
     "liveUrl": "https://open-source-llm-10.aura.build/",
     "previewPath": null
@@ -362,7 +362,7 @@
   {
     "slug": "volta-ev.aura.build",
     "name": "Volta Ev",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/volta-ev.aura.build.webp",
     "liveUrl": "https://volta-ev.aura.build/",
     "previewPath": null
@@ -386,7 +386,7 @@
   {
     "slug": "aex.aura.build",
     "name": "Aex",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/aex.aura.build.webp",
     "liveUrl": "https://aex.aura.build/",
     "previewPath": null
@@ -394,7 +394,7 @@
   {
     "slug": "ai-marketing-56.aura.build",
     "name": "Ai Marketing",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/ai-marketing-56.aura.build.webp",
     "liveUrl": "https://ai-marketing-56.aura.build/",
     "previewPath": null
@@ -402,7 +402,7 @@
   {
     "slug": "condor-landingpage.aura.build",
     "name": "Condor Landingpage",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/condor-landingpage.aura.build.webp",
     "liveUrl": "https://condor-landingpage.aura.build/",
     "previewPath": null
@@ -418,7 +418,7 @@
   {
     "slug": "green-site",
     "name": "Green Site",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/green-site.webp",
     "liveUrl": null,
     "previewPath": "previews/green-site/index.html"
@@ -426,7 +426,7 @@
   {
     "slug": "imagenation.art",
     "name": "Imagenation",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/imagenation.art.webp",
     "liveUrl": "https://imagenation.art/",
     "previewPath": null
@@ -434,7 +434,7 @@
   {
     "slug": "jonathanfernandes.aura.build",
     "name": "Jonathanfernandes",
-    "category": "escuro",
+    "category": "claro",
     "thumb": "thumbs/jonathanfernandes.aura.build.webp",
     "liveUrl": "https://jonathanfernandes.aura.build/",
     "previewPath": null
@@ -442,7 +442,7 @@
   {
     "slug": "axion-ai.aura.build",
     "name": "Axion Ai",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/axion-ai.aura.build.webp",
     "liveUrl": "https://axion-ai.aura.build/",
     "previewPath": null
@@ -450,7 +450,7 @@
   {
     "slug": "barbershop-landing-51.aura.build",
     "name": "Barbershop Landing",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/barbershop-landing-51.aura.build.webp",
     "liveUrl": "https://barbershop-landing-51.aura.build/",
     "previewPath": null
@@ -458,7 +458,7 @@
   {
     "slug": "core-developer-56.aura.build",
     "name": "Core Developer",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/core-developer-56.aura.build.webp",
     "liveUrl": "https://core-developer-56.aura.build/",
     "previewPath": null
@@ -466,7 +466,7 @@
   {
     "slug": "esports-tournament-96.aura.build",
     "name": "Esports Tournament",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/esports-tournament-96.aura.build.webp",
     "liveUrl": "https://esports-tournament-96.aura.build/",
     "previewPath": null
@@ -474,7 +474,7 @@
   {
     "slug": "finex-internet.aura.build",
     "name": "Finex Internet",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/finex-internet.aura.build.webp",
     "liveUrl": "https://finex-internet.aura.build/",
     "previewPath": null
@@ -482,7 +482,7 @@
   {
     "slug": "futuristic-webgl.aura.build",
     "name": "Futuristic Webgl",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/futuristic-webgl.aura.build.webp",
     "liveUrl": "https://futuristic-webgl.aura.build/",
     "previewPath": null
@@ -490,7 +490,7 @@
   {
     "slug": "monolith-architecture.aura.build",
     "name": "Monolith Architecture",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/monolith-architecture.aura.build.webp",
     "liveUrl": "https://monolith-architecture.aura.build/",
     "previewPath": null
@@ -498,7 +498,7 @@
   {
     "slug": "saas-developer.aura.build",
     "name": "Saas Developer",
-    "category": "claro",
+    "category": "escuro",
     "thumb": "thumbs/saas-developer.aura.build.webp",
     "liveUrl": "https://saas-developer.aura.build/",
     "previewPath": null
