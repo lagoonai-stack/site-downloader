@@ -18,6 +18,7 @@ const ALLOWED_EMAILS = [
   "neveskarolina6@gmail.com",
   "lagoon.auto.ai@gmail.com",
   "guilhermegrasso@gmail.com",
+  "obrabodosvideos@gmail.com",
 ];
 
 export async function requireBraboSpaceUser(req, res, next) {
