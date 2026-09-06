@@ -53,11 +53,25 @@ const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1?\s*\)/g;
 const CURRENT_COLOR_RE = /currentColor/i;
 const HARDCODED_COLOR_RE = /(?:fill|stroke)\s*=\s*["'](#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))["']/i;
 
+// Um SVG cujo id (ou de algum filho seu, ex: um <path> animado) e
+// referenciado em algum <script> da pagina (getElementById/querySelector
+// scroll-linked, etc.) precisa continuar no DOM pra esse JS continuar
+// achando e manipulando ele - virar <img> congela a animacao (e como o
+// arquivo extraido normalmente nao tem xmlns, muitos navegadores nem
+// chegam a renderizar, disparando o proprio fallback de imagem quebrada
+// do site no lugar).
+function isReferencedByInlineScript($, el, scriptText) {
+  if (!scriptText) return false;
+  const ids = [$(el).attr("id"), ...$(el).find("[id]").map((_, e) => $(e).attr("id")).get()].filter(Boolean);
+  return ids.some((id) => scriptText.includes(id));
+}
+
 // Classifica cada <svg>: icone Lucide vira <i data-lucide>, SVG com
-// currentColor fica inline (so minificado), SVG com cor fixa e salvo como
+// currentColor OU manipulado por JS (por id) fica inline (so minificado),
+// SVG com cor fixa e sem nenhum id referenciado em script e salvo como
 // imagem e vira <img>. Na duvida entre B/C, escolhe B (mantem inline) - e a
-// opcao segura, ja que virar <img> quebraria heranca de cor.
-function classifySvgs($) {
+// opcao segura, ja que virar <img> quebraria heranca de cor ou animacao.
+function classifySvgs($, scriptText) {
   const files = [];
   const used = new Set();
 
@@ -81,13 +95,20 @@ function classifySvgs($) {
     const outer = $.html(el);
     const hasHardcoded = HARDCODED_COLOR_RE.test(outer);
     const hasCurrentColor = CURRENT_COLOR_RE.test(outer);
+    const drivenByJs = isReferencedByInlineScript($, el, scriptText);
 
-    if (hasHardcoded && !hasCurrentColor) {
+    if (hasHardcoded && !hasCurrentColor && !drivenByJs) {
       const idSeed = $el.attr("id") || $el.parent().attr("id") || $el.parent().attr("class") || "";
       const words = splitWords(idSeed);
       const name = pickName(words, used, "icon");
       const svgFileName = `assets/images/svg/${name}.svg`;
-      files.push({ name: svgFileName, buf: Buffer.from(outer, "utf8") });
+      // <img src="x.svg"> exige que o SVG seja um documento standalone
+      // valido - sem xmlns declarado (dispensavel quando o SVG vive
+      // inline no HTML) varios navegadores simplesmente recusam renderizar.
+      const standalone = /\bxmlns\s*=/.test(outer)
+        ? outer
+        : outer.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+      files.push({ name: svgFileName, buf: Buffer.from(standalone, "utf8") });
       const classAttr = cls ? ` class="${cls}"` : "";
       $el.replaceWith(`<img src="${svgFileName}"${classAttr} alt="${name}"/>`);
     } else {
@@ -214,7 +235,11 @@ export function buildDesignSystem($, results) {
   const d$ = cheerio.load($.html());
   const localToAbs = new Map(results.map((r) => [r.local, r.absUrl]));
 
-  const svgFiles = classifySvgs(d$);
+  const inlineScriptText = d$("script:not([src])")
+    .map((_, el) => d$(el).html() || "")
+    .get()
+    .join("\n");
+  const svgFiles = classifySvgs(d$, inlineScriptText);
   annotateSections(d$);
   revertNonImageRefsToOrigin(d$, localToAbs);
 
