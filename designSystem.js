@@ -215,7 +215,12 @@ function scanDeclarations(cssText, buckets) {
 function scanArbitraryClasses(classText, buckets) {
   for (const m of classText.matchAll(ARBITRARY_CLASS_RE)) {
     const prefix = m[1];
-    const raw = decodeURIComponent(m[2].replace(/\\_/g, " ").replace(/_/g, " "));
+    // "_" e o jeito do Tailwind representar espaco dentro de um valor
+    // arbitrario (classe nao pode ter espaco de verdade). Nao usamos
+    // decodeURIComponent aqui: valores arbitrarios legitimos usam "%" fora
+    // de escape de URI o tempo todo (calc(100%-2rem), -50% etc.), o que
+    // fazia essa linha derrubar a analise inteira com "URI malformed".
+    const raw = m[2].replace(/\\_/g, " ").replace(/_/g, " ");
 
     if (ARBITRARY_COLOR_PREFIXES.has(prefix) && looksLikeColor(raw)) {
       const token = normalizeColor(raw);
