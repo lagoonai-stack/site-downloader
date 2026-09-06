@@ -1,14 +1,20 @@
 import * as cheerio from "cheerio";
 
-// Constroi um export de "design system" 100% deterministico (sem chamada de
-// IA): separa CSS/JS que estava inline em arquivos proprios, classifica cada
-// SVG (icone Lucide / cor herdada via currentColor / cor fixa), comenta cada
-// secao e detecta a stack usada, por assinatura conhecida - sem tradução.
+// Constroi um export de "design system" leve e 100% deterministico (sem
+// chamada de IA) - diferente do /download normal, que baixa o site inteiro
+// com todas as dependencias. Aqui:
+//   - CSS/JS que ja estava inline continua inline no proprio HTML (nao vira
+//     arquivo separado) - inclui as animacoes/interacoes do site.
+//   - SVG e classificado (icone Lucide / cor herdada via currentColor / cor
+//     fixa) igual antes.
+//   - Qualquer referencia a arquivo que NAO seja imagem (fonte, biblioteca
+//     JS como Three.js, runtime do Tailwind, CSS externo tipo Google Fonts)
+//     volta a apontar pra URL remota original em vez do caminho local -
+//     continua funcional com internet, mas nao infla o zip.
+//   - So imagem realmente utilizada vira arquivo dentro do zip.
 //
-// Ao contrario de uma reescrita "do zero", a estrutura original do HTML e
-// preservada (so remove o que virou arquivo externo e troca o SVG que virou
-// <img>) - isso garante fidelidade visual por construcao, sem depender de
-// nada reinterpretar o layout.
+// A estrutura original do HTML e preservada (nao e uma reescrita do zero) -
+// isso garante fidelidade visual por construcao.
 
 const STOPWORDS = new Set([
   "container", "wrapper", "wrap", "item", "items", "block", "inline", "flex",
@@ -41,99 +47,23 @@ function pickName(words, used, fallbackPrefix) {
   return name;
 }
 
-const HEX_TOKEN_RE = /^[0-9a-f]{3,8}$/i;
-// Marca de classe utilitaria com valor arbitrario (bg-\[\#fff\], w-\[40px\]
-// etc.) - a assinatura mais confiavel de que um bloco e Tailwind compilado.
-const TAILWIND_ARBITRARY_RE = /\.(?:bg|text|border|w|h|p|m|gap|rounded|shadow|flex|grid)-?\\?\[/;
-
-// Retira todo <style> inline, agrupa cada bloco num arquivo CSS proprio
-// nomeado pela palavra mais frequente entre os seletores que ele define.
-// So olha pra parte de SELETOR de cada regra (nunca o corpo/valores) -
-// senao uma cor tipo "color:#fff" vira palavra-chave por engano.
-function extractStyles($) {
-  const files = [];
-  const used = new Set();
-  $("style").each((i, el) => {
-    const text = $(el).html() || "";
-    if (!text.trim()) {
-      $(el).remove();
-      return;
-    }
-
-    const selectorText = text
-      .split(/\{[^{}]*\}/g) // remove o corpo de cada regra (nao-aninhada)
-      .join(" ");
-
-    let name;
-    const arbitraryHits = [...text.matchAll(new RegExp(TAILWIND_ARBITRARY_RE, "g"))].length;
-    if (arbitraryHits > 5) {
-      name = "tailwind-utilities";
-      let i2 = 2;
-      while (used.has(name)) name = `tailwind-utilities-${i2++}`;
-      used.add(name);
-    } else {
-      const words = [];
-      for (const m of selectorText.matchAll(/[.#]([a-zA-Z][\w-]*)/g)) {
-        if (HEX_TOKEN_RE.test(m[1])) continue;
-        words.push(...splitWords(m[1]));
-      }
-      name = pickName(words, used, "estilos");
-    }
-
-    files.push({ name: `assets/css/${name}.css`, content: text, inHead: $(el).parents("head").length > 0 });
-    $(el).remove();
-  });
-  return files;
-}
-
-// Retira todo <script> inline com codigo de verdade (ignora ld+json e
-// scripts triviais de uma linha), agrupa por arquivo JS nomeado pelos
-// identificadores (ids/seletores/nomes de funcao) mais frequentes nele.
-function extractScripts($) {
-  const files = [];
-  const used = new Set();
-  $("script").each((i, el) => {
-    const $el = $(el);
-    if ($el.attr("src")) return;
-    if ($el.attr("type") === "application/ld+json") return;
-    const text = $el.html() || "";
-    const trimmed = text.trim();
-    if (!trimmed) {
-      $el.remove();
-      return;
-    }
-    const isSingleLineHandler = !trimmed.includes("\n") && trimmed.length < 120;
-    if (isSingleLineHandler) return;
-
-    const words = [];
-    for (const m of trimmed.matchAll(/(?:getElementById|querySelector(?:All)?)\(\s*["'`][.#]?([\w-]+)/g)) {
-      words.push(...splitWords(m[1]));
-    }
-    for (const m of trimmed.matchAll(/\bfunction\s+([a-zA-Z_$][\w$]*)/g)) words.push(...splitWords(m[1]));
-    for (const m of trimmed.matchAll(/\bconst\s+([a-zA-Z_$][\w$]*)\s*=/g)) words.push(...splitWords(m[1]));
-    const name = pickName(words, used, "interactions");
-    files.push({ name: `assets/js/${name}.js`, content: trimmed, inHead: $el.parents("head").length > 0 });
-    $el.remove();
-  });
-  return files;
-}
+export const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
+const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1?\s*\)/g;
 
 const CURRENT_COLOR_RE = /currentColor/i;
 const HARDCODED_COLOR_RE = /(?:fill|stroke)\s*=\s*["'](#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))["']/i;
 
 // Classifica cada <svg>: icone Lucide vira <i data-lucide>, SVG com
 // currentColor fica inline (so minificado), SVG com cor fixa e salvo como
-// arquivo e vira <img>. Na duvida entre B/C, escolhe B (mantem inline) -
-// e a opcao segura, ja que virar <img> quebraria heranca de cor.
+// imagem e vira <img>. Na duvida entre B/C, escolhe B (mantem inline) - e a
+// opcao segura, ja que virar <img> quebraria heranca de cor.
 function classifySvgs($) {
   const files = [];
   const used = new Set();
-  let counter = 0;
 
   $("svg").each((_, el) => {
     const $el = $(el);
     if ($el.parents("svg").length > 0) return; // so o <svg> raiz, nao os aninhados (ex: <use>, <symbol>)
-    counter += 1;
     const cls = $el.attr("class") || "";
     const dataLucide = $el.attr("data-lucide");
     const lucideMatch = cls.match(/\blucide-([\w-]+)/);
@@ -157,7 +87,7 @@ function classifySvgs($) {
       const words = splitWords(idSeed);
       const name = pickName(words, used, "icon");
       const svgFileName = `assets/images/svg/${name}.svg`;
-      files.push({ name: svgFileName, content: outer });
+      files.push({ name: svgFileName, buf: Buffer.from(outer, "utf8") });
       const classAttr = cls ? ` class="${cls}"` : "";
       $el.replaceWith(`<img src="${svgFileName}"${classAttr} alt="${name}"/>`);
     } else {
@@ -182,12 +112,57 @@ function annotateSections($) {
     });
 }
 
+// O download normal ja localizou todo href/src pra "assets/..." (ver
+// buildSiteAssets em server.js). Aqui desfazemos isso seletivamente: so
+// imagem continua local (vira arquivo no zip); fonte, biblioteca JS externa
+// e CSS externo (Google Fonts etc.) voltam a apontar pro endereco remoto
+// original, entao a pagina continua funcional (com internet) sem precisar
+// empacotar esses arquivos, que sao o peso de verdade do download completo.
+function revertNonImageRefsToOrigin($, localToAbs) {
+  const backToRemote = (val) => {
+    if (!val || /^(https?:)?\/\//.test(val) || val.startsWith("data:")) return null;
+    if (IMAGE_EXT_RE.test(val)) return null;
+    return localToAbs.get(val) || null;
+  };
+
+  $("link[href], script[src]").each((_, el) => {
+    const attr = el.tagName.toLowerCase() === "link" ? "href" : "src";
+    const val = $(el).attr(attr);
+    const abs = backToRemote(val);
+    if (abs) $(el).attr(attr, abs);
+  });
+
+  $("video[src], audio[src], video source[src], audio source[src]").each((_, el) => {
+    const val = $(el).attr("src");
+    const abs = backToRemote(val);
+    if (abs) $(el).attr("src", abs);
+  });
+
+  $("style").each((_, el) => {
+    const text = $(el).html() || "";
+    if (!text.includes("url(")) return;
+    const rewritten = text.replace(CSS_URL_RE, (full, _quote, raw) => {
+      const trimmed = raw.trim();
+      const abs = backToRemote(trimmed);
+      return abs ? `url(${abs})` : full;
+    });
+    $(el).html(rewritten);
+  });
+}
+
 // Assinaturas conhecidas -> uma linha de STACK.md. Deteccao por padrao
-// (nome de arquivo, texto de biblioteca, atributo) - nao descreve o "porque"
-// com a mesma riqueza que uma leitura humana faria, so lista o que achou.
-function detectStack($, cssBlocks, jsBlocks) {
-  const allJs = jsBlocks.map((f) => f.content).join("\n");
-  const allCss = cssBlocks.map((f) => f.content).join("\n");
+// (nome/URL de arquivo, texto de biblioteca, atributo) - nao descreve o
+// "porque" com a mesma riqueza que uma leitura humana faria, so lista o
+// que achou.
+function detectStack($) {
+  const allJs = $("script:not([src])")
+    .toArray()
+    .map((el) => $(el).html() || "")
+    .join("\n");
+  const allCss = $("style")
+    .toArray()
+    .map((el) => $(el).html() || "")
+    .join("\n");
   const html = $.html();
   const lines = [];
 
@@ -230,31 +205,19 @@ function detectStack($, cssBlocks, jsBlocks) {
  *   fontes/scripts externos) resolvidos para caminhos locais (ver
  *   buildSiteAssets em server.js). Uma copia propria e feita internamente -
  *   o $ recebido nunca e mutado.
+ * @param {Array<{absUrl: string, local: string}>} results - mesma lista
+ *   usada pelo /download, pra saber a URL remota original de cada caminho
+ *   local (necessario pra "devolver" fontes/scripts/CSS externos ao
+ *   endereco de origem em vez de empacotar).
  */
-export function buildDesignSystem($) {
+export function buildDesignSystem($, results) {
   const d$ = cheerio.load($.html());
+  const localToAbs = new Map(results.map((r) => [r.local, r.absUrl]));
 
-  const cssFiles = extractStyles(d$);
-  const jsFiles = extractScripts(d$);
   const svgFiles = classifySvgs(d$);
   annotateSections(d$);
+  revertNonImageRefsToOrigin(d$, localToAbs);
 
-  const head = d$("head");
-  for (const f of cssFiles) {
-    head.append(`<!-- css -->\n<link rel="stylesheet" href="${f.name}"/>\n`);
-  }
-  for (const f of jsFiles) {
-    const tag = `<!-- js -->\n<script src="${f.name}"></script>\n`;
-    if (f.inHead) head.append(tag);
-    else d$("body").append(tag);
-  }
-
-  const stackMd = detectStack(d$, cssFiles, jsFiles);
-  const files = [
-    ...cssFiles.map((f) => ({ name: f.name, buf: Buffer.from(f.content, "utf8") })),
-    ...jsFiles.map((f) => ({ name: f.name, buf: Buffer.from(f.content, "utf8") })),
-    ...svgFiles.map((f) => ({ name: f.name, buf: Buffer.from(f.content, "utf8") })),
-  ];
-
-  return { html: d$.html(), files, stackMd };
+  const stackMd = detectStack(d$);
+  return { html: d$.html(), files: svgFiles, stackMd };
 }

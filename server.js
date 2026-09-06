@@ -12,7 +12,7 @@ import { build as esbuildBuild } from "esbuild";
 
 import kiwifyWebhook from "./kiwifyWebhook.js";
 import { requireBraboSpaceUser } from "./requireBraboSpaceUser.js";
-import { buildDesignSystem } from "./designSystemBuilder.js";
+import { buildDesignSystem, IMAGE_EXT_RE } from "./designSystemBuilder.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -565,7 +565,6 @@ async function buildSiteAssets(target) {
     // dominio nem extensao - se o frame que baixamos pediu, faz parte
     // do site de verdade (ja filtramos pra so esse frame em getHtml).
     const knownAbs = new Set(jobs.map((j) => j.absUrl));
-    const IMG_EXT = /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
     for (const reqUrl of requestedUrls) {
       let u;
       try {
@@ -579,7 +578,7 @@ async function buildSiteAssets(target) {
 
       const folder = u.pathname.endsWith(".css")
         ? "css"
-        : IMG_EXT.test(u.pathname)
+        : IMAGE_EXT_RE.test(u.pathname)
         ? "img"
         : "js";
       const local = localName(u.href, folder, seen);
@@ -619,9 +618,11 @@ async function buildSiteAssets(target) {
 // informa a URL:
 //   - "site"          (padrao): so o site (index.html + assets/), igual ao
 //                      comportamento historico do /download.
-//   - "design-system": zip so com design-system.html (CSS/JS que estava
-//                      inline vira arquivo proprio, SVG classificado) + os
-//                      assets que ele referencia + STACK.md. Sem index.html.
+//   - "design-system": zip leve so com design-system.html (CSS/JS que ja
+//                      estava inline continua inline, SVG classificado) +
+//                      so as IMAGENS que ele usa + STACK.md. Fonte/lib JS/
+//                      CSS externo apontam de volta pro endereco remoto
+//                      original em vez de serem empacotados - sem index.html.
 //   - "both":          zip com o site completo (index.html + assets/) e o
 //                      design system inteiro dentro de design-system/,
 //                      separado da pasta assets/ do site.
@@ -648,10 +649,12 @@ app.get("/download", async (req, res) => {
     // trabalha em cima de uma copia propria do DOM (nao mexe no $ usado pelo
     // modo "site"/"both" abaixo) e nao depende do resultado do bundle de JS.
     const designSystem =
-      mode === "design-system" || mode === "both" ? buildDesignSystem($) : null;
+      mode === "design-system" || mode === "both" ? buildDesignSystem($, results) : null;
 
     // Modo "so design system": nem baixa/empacota o JS (bundleModuleEntries),
-    // ja devolve o zip so com o design system.
+    // ja devolve o zip so com o design system - so imagem entra como asset,
+    // o resto (fonte/lib JS/CSS externo) o proprio designSystem.html ja
+    // aponta de volta pro endereco remoto original.
     if (mode === "design-system") {
       res.setHeader("Content-Type", "application/zip");
       res.setHeader(
@@ -664,7 +667,7 @@ app.get("/download", async (req, res) => {
       zip.append(designSystem.html, { name: "design-system.html" });
       for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
       for (const r of results) {
-        if (r.buf) zip.append(r.buf, { name: r.local });
+        if (r.buf && IMAGE_EXT_RE.test(r.local)) zip.append(r.buf, { name: r.local });
       }
       zip.append(designSystem.stackMd, { name: "STACK.md" });
       await zip.finalize();
@@ -707,7 +710,7 @@ app.get("/download", async (req, res) => {
         zip.append(f.buf, { name: `design-system/${f.name}` });
       }
       for (const r of results) {
-        if (r.buf) zip.append(r.buf, { name: `design-system/${r.local}` });
+        if (r.buf && IMAGE_EXT_RE.test(r.local)) zip.append(r.buf, { name: `design-system/${r.local}` });
       }
       zip.append(designSystem.stackMd, { name: "design-system/STACK.md" });
     }
