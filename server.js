@@ -12,6 +12,7 @@ import { build as esbuildBuild } from "esbuild";
 
 import kiwifyWebhook from "./kiwifyWebhook.js";
 import { requireBraboSpaceUser } from "./requireBraboSpaceUser.js";
+import { extractDesignSystem } from "./designSystem.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -407,25 +408,22 @@ async function detectNeedsSpa(target) {
   }
 }
 
-app.get("/download", async (req, res) => {
-  const target = req.query.url;
-  if (!target) return res.status(400).send("Falta o parametro ?url=");
+// Faz todo o trabalho de baixar HTML + descobrir/buscar os assets (CSS,
+// JS, imagens, video/audio) e devolve o DOM ja reescrito (referencias
+// locais) junto com os buffers baixados. Usado pelo /download nos tres
+// modos (site/design-system/both) - mesmo no modo "so design system" a
+// extracao depende do CSS final, entao a coleta roda igual.
+async function buildSiteAssets(target) {
+  const base = new URL(target);
+  const useSpa = await detectNeedsSpa(target);
+  const { html, requestedUrls } = await getHtml(target, useSpa);
+  const $ = cheerio.load(html);
+  const seen = new Set();
+  const jobs = [];
+  const moduleEntries = [];
+  const modulePreloadChunks = [];
 
-  let base;
-  try {
-    base = new URL(target);
-  } catch {
-    return res.status(400).send("URL invalida");
-  }
-
-  try {
-    const useSpa = await detectNeedsSpa(target);
-    const { html, requestedUrls } = await getHtml(target, useSpa);
-    const $ = cheerio.load(html);
-    const seen = new Set();
-    const jobs = [];
-
-    // crossorigin/integrity forcam modo CORS na requisicao, que o
+  // crossorigin/integrity forcam modo CORS na requisicao, que o
     // navegador sempre recusa em paginas abertas via file:// (origem
     // "null") - mesmo pro arquivo estando bem ao lado. Sem sentido pra
     // um espelho local, entao removemos ao reescrever pro caminho local.
@@ -471,7 +469,6 @@ app.get("/download", async (req, res) => {
     });
 
     // JS
-    const moduleEntries = [];
     $("script[src]").each((_, el) => {
       const src = $(el).attr("src");
       if (!src) return;
@@ -487,7 +484,6 @@ app.get("/download", async (req, res) => {
 
     // Modulepreload/preload de scripts (Vite/React e outros bundlers com
     // code-splitting expõem os chunks JS assim, não como <script src>)
-    const modulePreloadChunks = [];
     $('link[rel="modulepreload"], link[rel="preload"][as="script"]').each((_, el) => {
       const href = $(el).attr("href");
       if (!href) return;
@@ -604,6 +600,55 @@ app.get("/download", async (req, res) => {
       console.error("Falha ao expandir url() do CSS:", err.message);
     }
 
+  return { $, base, results, moduleEntries, modulePreloadChunks };
+}
+
+// Tres opcoes de download, escolhidas via ?mode= depois que o cliente
+// informa a URL:
+//   - "site"          (padrao): so o site (index.html + assets/), igual ao
+//                      comportamento historico do /download.
+//   - "design-system": so o design-system.json, sem baixar nem empacotar o
+//                      site inteiro.
+//   - "both":          zip com o site completo (index.html + assets/) e o
+//                      design-system.json solto na raiz do zip, fora da
+//                      pasta assets/.
+const DOWNLOAD_MODES = new Set(["site", "design-system", "both"]);
+
+app.get("/download", async (req, res) => {
+  const target = req.query.url;
+  if (!target) return res.status(400).send("Falta o parametro ?url=");
+
+  const mode = DOWNLOAD_MODES.has(req.query.mode) ? req.query.mode : "site";
+
+  try {
+    new URL(target);
+  } catch {
+    return res.status(400).send("URL invalida");
+  }
+
+  try {
+    const { $, base, results: collected, moduleEntries, modulePreloadChunks } = await buildSiteAssets(target);
+    let results = collected;
+    const hostname = base.hostname.replace(/[^a-z0-9.-]/gi, "_");
+
+    // Precisa acontecer ANTES do empacotamento de modulos: bundleModuleEntries
+    // so mexe em JS, mas o CSS (fonte dos tokens) ja esta no estado final aqui.
+    let designSystemJson = null;
+    if (mode === "design-system" || mode === "both") {
+      designSystemJson = extractDesignSystem({ $, results, source: target });
+    }
+
+    // Modo "so design system": nem baixa o resto (bundle de JS, zip) -
+    // devolve so o JSON, com cabecalho de download igual ao do zip.
+    if (mode === "design-system") {
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${hostname}-design-system.json"`
+      );
+      return res.send(JSON.stringify(designSystemJson, null, 2));
+    }
+
     // Empacota os scripts type="module" num script classico, pra dar pra
     // abrir o index.html direto com duplo-clique (navegadores bloqueiam
     // modulos ES quando a pagina vem de file://), sempre que existir
@@ -619,8 +664,7 @@ app.get("/download", async (req, res) => {
       }
     }
 
-    // Monta o ZIP
-    const hostname = base.hostname.replace(/[^a-z0-9.-]/gi, "_");
+    // Monta o ZIP ("site" ou "both")
     res.setHeader("Content-Type", "application/zip");
     res.setHeader(
       "Content-Disposition",
@@ -634,6 +678,9 @@ app.get("/download", async (req, res) => {
     zip.append($.html(), { name: "index.html" });
     for (const r of results) {
       if (r.buf) zip.append(r.buf, { name: r.local });
+    }
+    if (mode === "both") {
+      zip.append(JSON.stringify(designSystemJson, null, 2), { name: "design-system.json" });
     }
     await zip.finalize();
   } catch (err) {
