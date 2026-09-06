@@ -12,7 +12,7 @@ import { build as esbuildBuild } from "esbuild";
 
 import kiwifyWebhook from "./kiwifyWebhook.js";
 import { requireBraboSpaceUser } from "./requireBraboSpaceUser.js";
-import { extractDesignSystem } from "./designSystem.js";
+import { buildDesignSystem } from "./designSystemBuilder.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -146,13 +146,25 @@ async function getHtml(url, useSpa) {
   return { html: data, requestedUrls: [] };
 }
 
+// Windows recusa esses caracteres em nome de arquivo, e silenciosamente
+// descarta ponto/espaco no final - um nome que vira so "..." depois do
+// split de query/hash (ou qualquer outro que so sobre pontos/espacos)
+// produz uma entrada de zip que o Explorer (e o .NET) rejeitam na hora de
+// extrair, mesmo o zip sendo valido pra ferramentas mais tolerantes.
+function sanitizeFileName(name) {
+  let n = name.replace(/[<>:"|?*\x00-\x1f]/g, "_").replace(/[.\s]+$/, "");
+  if (!n) n = "file";
+  if (/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(n)) n = `_${n}`;
+  return n;
+}
+
 // Tudo (JS, CSS, imagens) cai numa unica pasta assets/, igual a
 // estrutura que a maioria das ferramentas de download de site usa
 // (index.html + assets/). "folder" so serve mais pra decidir a
 // extensao padrao quando o nome do arquivo original nao tem uma.
 function localName(resUrl, folder, seen) {
   let name = path.basename(new URL(resUrl).pathname) || "index";
-  name = name.split("?")[0].split("#")[0] || "file";
+  name = sanitizeFileName(name.split("?")[0].split("#")[0] || "file");
   if (!path.extname(name)) name += folder === "css" ? ".css" : folder === "js" ? ".js" : "";
   let final = `assets/${name}`;
   let i = 1;
@@ -607,11 +619,12 @@ async function buildSiteAssets(target) {
 // informa a URL:
 //   - "site"          (padrao): so o site (index.html + assets/), igual ao
 //                      comportamento historico do /download.
-//   - "design-system": so o design-system.json, sem baixar nem empacotar o
-//                      site inteiro.
+//   - "design-system": zip so com design-system.html (CSS/JS que estava
+//                      inline vira arquivo proprio, SVG classificado) + os
+//                      assets que ele referencia + STACK.md. Sem index.html.
 //   - "both":          zip com o site completo (index.html + assets/) e o
-//                      design-system.json solto na raiz do zip, fora da
-//                      pasta assets/.
+//                      design system inteiro dentro de design-system/,
+//                      separado da pasta assets/ do site.
 const DOWNLOAD_MODES = new Set(["site", "design-system", "both"]);
 
 app.get("/download", async (req, res) => {
@@ -631,22 +644,31 @@ app.get("/download", async (req, res) => {
     let results = collected;
     const hostname = base.hostname.replace(/[^a-z0-9.-]/gi, "_");
 
-    // Precisa acontecer ANTES do empacotamento de modulos: bundleModuleEntries
-    // so mexe em JS, mas o CSS (fonte dos tokens) ja esta no estado final aqui.
-    let designSystemJson = null;
-    if (mode === "design-system" || mode === "both") {
-      designSystemJson = extractDesignSystem({ $, results, source: target });
-    }
+    // Precisa acontecer ANTES do empacotamento de modulos: buildDesignSystem
+    // trabalha em cima de uma copia propria do DOM (nao mexe no $ usado pelo
+    // modo "site"/"both" abaixo) e nao depende do resultado do bundle de JS.
+    const designSystem =
+      mode === "design-system" || mode === "both" ? buildDesignSystem($) : null;
 
-    // Modo "so design system": nem baixa o resto (bundle de JS, zip) -
-    // devolve so o JSON, com cabecalho de download igual ao do zip.
+    // Modo "so design system": nem baixa/empacota o JS (bundleModuleEntries),
+    // ja devolve o zip so com o design system.
     if (mode === "design-system") {
-      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Type", "application/zip");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="${hostname}-design-system.json"`
+        `attachment; filename="${hostname}-design-system.zip"`
       );
-      return res.send(JSON.stringify(designSystemJson, null, 2));
+      const zip = archiver("zip", { zlib: { level: 9 } });
+      zip.on("error", (err) => res.status(500).end(String(err)));
+      zip.pipe(res);
+      zip.append(designSystem.html, { name: "design-system.html" });
+      for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
+      for (const r of results) {
+        if (r.buf) zip.append(r.buf, { name: r.local });
+      }
+      zip.append(designSystem.stackMd, { name: "STACK.md" });
+      await zip.finalize();
+      return;
     }
 
     // Empacota os scripts type="module" num script classico, pra dar pra
@@ -680,7 +702,14 @@ app.get("/download", async (req, res) => {
       if (r.buf) zip.append(r.buf, { name: r.local });
     }
     if (mode === "both") {
-      zip.append(JSON.stringify(designSystemJson, null, 2), { name: "design-system.json" });
+      zip.append(designSystem.html, { name: "design-system/design-system.html" });
+      for (const f of designSystem.files) {
+        zip.append(f.buf, { name: `design-system/${f.name}` });
+      }
+      for (const r of results) {
+        if (r.buf) zip.append(r.buf, { name: `design-system/${r.local}` });
+      }
+      zip.append(designSystem.stackMd, { name: "design-system/STACK.md" });
     }
     await zip.finalize();
   } catch (err) {
