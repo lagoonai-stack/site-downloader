@@ -631,14 +631,16 @@ async function buildSiteAssets(target) {
 // informa a URL:
 //   - "site"          (padrao): so o site (index.html + assets/), igual ao
 //                      comportamento historico do /download.
-//   - "design-system": zip leve so com design-system.html (CSS/JS que ja
-//                      estava inline continua inline, SVG classificado) +
-//                      so as IMAGENS que ele usa + STACK.md. Fonte/lib JS/
-//                      CSS externo apontam de volta pro endereco remoto
-//                      original em vez de serem empacotados - sem index.html.
-//   - "both":          zip com o site completo (index.html + assets/) e o
-//                      design system inteiro dentro de design-system/,
-//                      separado da pasta assets/ do site.
+//   - "design-system": design-system.html (CSS/JS que estava inline vira
+//                      arquivo proprio em assets/css|js, SVG classificado)
+//                      + os mesmos assets do site (imagens/fontes/libs) +
+//                      STACK.md. Sem index.html. O ganho e o HTML principal
+//                      ficar bem menor (poucos KB em vez de um bundle
+//                      inteiro inline) - nao o tamanho total do zip.
+//   - "both":          zip com index.html (original) e design-system.html
+//                      (organizado) lado a lado, compartilhando a mesma
+//                      pasta assets/ (a extracao de CSS/JS so acrescenta
+//                      assets/css|js novos, sem duplicar nada).
 const DOWNLOAD_MODES = new Set(["site", "design-system", "both"]);
 
 app.get("/download", async (req, res) => {
@@ -662,12 +664,11 @@ app.get("/download", async (req, res) => {
     // trabalha em cima de uma copia propria do DOM (nao mexe no $ usado pelo
     // modo "site"/"both" abaixo) e nao depende do resultado do bundle de JS.
     const designSystem =
-      mode === "design-system" || mode === "both" ? buildDesignSystem($, results) : null;
+      mode === "design-system" || mode === "both" ? buildDesignSystem($) : null;
 
     // Modo "so design system": nem baixa/empacota o JS (bundleModuleEntries),
-    // ja devolve o zip so com o design system - so imagem entra como asset,
-    // o resto (fonte/lib JS/CSS externo) o proprio designSystem.html ja
-    // aponta de volta pro endereco remoto original.
+    // ja devolve o zip so com o design-system.html + os mesmos assets do
+    // site (imagens/fontes/libs continuam locais, so nao ha index.html).
     if (mode === "design-system") {
       res.setHeader("Content-Type", "application/zip");
       res.setHeader(
@@ -683,7 +684,7 @@ app.get("/download", async (req, res) => {
       zip.append(designSystem.html, { name: "design-system.html" });
       for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
       for (const r of results) {
-        if (r.buf && IMAGE_EXT_RE.test(r.local)) zip.append(r.buf, { name: r.local });
+        if (r.buf) zip.append(r.buf, { name: r.local });
       }
       zip.append(designSystem.stackMd, { name: "STACK.md" });
       await zip.finalize();
@@ -724,14 +725,11 @@ app.get("/download", async (req, res) => {
       if (r.buf) zip.append(r.buf, { name: r.local });
     }
     if (mode === "both") {
-      zip.append(designSystem.html, { name: "design-system/design-system.html" });
-      for (const f of designSystem.files) {
-        zip.append(f.buf, { name: `design-system/${f.name}` });
-      }
-      for (const r of results) {
-        if (r.buf && IMAGE_EXT_RE.test(r.local)) zip.append(r.buf, { name: `design-system/${r.local}` });
-      }
-      zip.append(designSystem.stackMd, { name: "design-system/STACK.md" });
+      // Compartilha a mesma pasta assets/ do site - a extracao de CSS/JS
+      // so acrescenta assets/css|js novos, entao nao ha nada pra duplicar.
+      zip.append(designSystem.html, { name: "design-system.html" });
+      for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
+      zip.append(designSystem.stackMd, { name: "STACK.md" });
     }
     await zip.finalize();
   } catch (err) {
