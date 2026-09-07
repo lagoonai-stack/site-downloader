@@ -49,6 +49,19 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
+// Log de erro com timestamp e contexto da requisicao (url/mode), num
+// formato de linha unica e greppavel ("[ERROR] ...") - facilita achar e
+// correlacionar falhas nos logs do Dokploy, que por si so so mostram
+// stdout/stderr cru sem estruturar nada.
+function logError(label, err, context = {}) {
+  const ctx = Object.entries(context)
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([k, v]) => `${k}=${v}`)
+    .join(" ");
+  const detail = err?.stack || err?.message || String(err);
+  console.error(`[ERROR] ${new Date().toISOString()} ${label}${ctx ? " " + ctx : ""} :: ${detail}`);
+}
+
 // Casa url(...) em CSS, com ou sem aspas.
 const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1?\s*\)/g;
 
@@ -600,7 +613,7 @@ async function buildSiteAssets(target) {
     try {
       results = await crawlJsImports(results, seen);
     } catch (err) {
-      console.error("Falha ao expandir dependencias JS:", err.message);
+      logError("crawlJsImports", err, { url: target });
     }
 
     // Mesma logica pra CSS: imagem de fundo, fonte @font-face etc.
@@ -608,7 +621,7 @@ async function buildSiteAssets(target) {
     try {
       results = await crawlCssUrls(results, seen);
     } catch (err) {
-      console.error("Falha ao expandir url() do CSS:", err.message);
+      logError("crawlCssUrls", err, { url: target });
     }
 
   return { $, base, results, moduleEntries, modulePreloadChunks };
@@ -662,7 +675,10 @@ app.get("/download", async (req, res) => {
         `attachment; filename="${hostname}-design-system.zip"`
       );
       const zip = archiver("zip", { zlib: { level: 9 } });
-      zip.on("error", (err) => res.status(500).end(String(err)));
+      zip.on("error", (err) => {
+        logError("zip-stream", err, { url: target, mode });
+        res.status(500).end(String(err));
+      });
       zip.pipe(res);
       zip.append(designSystem.html, { name: "design-system.html" });
       for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
@@ -685,7 +701,7 @@ app.get("/download", async (req, res) => {
       try {
         results = await bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, results });
       } catch (err) {
-        console.error("Falha ao empacotar JS (mantendo versao modular):", err.message);
+        logError("bundleModuleEntries", err, { url: target, mode });
       }
     }
 
@@ -697,7 +713,10 @@ app.get("/download", async (req, res) => {
     );
 
     const zip = archiver("zip", { zlib: { level: 9 } });
-    zip.on("error", (err) => res.status(500).end(String(err)));
+    zip.on("error", (err) => {
+      logError("zip-stream", err, { url: target, mode });
+      res.status(500).end(String(err));
+    });
     zip.pipe(res);
 
     zip.append($.html(), { name: "index.html" });
@@ -716,7 +735,7 @@ app.get("/download", async (req, res) => {
     }
     await zip.finalize();
   } catch (err) {
-    console.error(err);
+    logError("download", err, { url: target, mode });
     res.status(500).send("Erro ao baixar: " + err.message);
   }
 });
