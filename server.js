@@ -127,6 +127,29 @@ async function getHtml(url, useSpa) {
     await targetFrame.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
     await new Promise((r) => setTimeout(r, 1500));
 
+    // O snippet oficial do Unicorn Studio (usado pelo fundo animado em
+    // varios templates Aura) e um "instalador" que so roda a logica real
+    // (UnicornStudio.init()) se `window.UnicornStudio` ainda nao existir -
+    // e ele mesmo injeta seu <script src=".../unicornStudio.umd.js">, cujo
+    // onload chama o init(). Como a gente captura o DOM DEPOIS desse
+    // <script> ja ter sido injetado, o snapshot fica com essa tag "fantasma"
+    // gravada no HTML - no proximo carregamento ela executa ANTES do
+    // snippet inline (que continua no HTML do jeito que foi escrito),
+    // entao quando o snippet roda `window.UnicornStudio` ja existe e ele
+    // nunca chama init() de novo: a animacao nao quebra visualmente (nao
+    // da erro), so nunca desenha nada no canvas. Removendo a tag fantasma
+    // e o estado de "ja inicializado", o snippet original volta a se
+    // auto-instalar como da primeira vez.
+    await targetFrame
+      .evaluate(() => {
+        document.querySelectorAll("[data-us-initialized]").forEach((el) => {
+          el.removeAttribute("data-us-initialized");
+          el.removeAttribute("data-scene-id");
+        });
+        document.querySelectorAll('script[src*="unicornstudio" i]').forEach((el) => el.remove());
+      })
+      .catch(() => {});
+
     const html = await targetFrame.content();
 
     // So as requisicoes feitas pelo frame que a gente de fato usou. Sem
@@ -603,6 +626,49 @@ async function buildSiteAssets(target) {
     let results = await Promise.all(
       jobs.map(async (j) => ({ ...j, buf: await fetchBuffer(j.absUrl) }))
     );
+
+    // Quando o download de um recurso falha (CDN de terceiros bloqueando
+    // por reputacao de IP tipo Cloudflare bot management - cdn.midjourney.com
+    // e' um caso real visto em producao - ou qualquer outro erro de rede),
+    // as tags acima ja foram reescritas pra apontar pro arquivo local ANTES
+    // de saber se o fetch ia dar certo. Sem isso, a tag fica IRRECUPERAVELMENTE
+    // quebrada (aponta pra um arquivo que nunca existiu no zip), mesmo que o
+    // recurso original continue perfeitamente acessivel pra quem abrir o site
+    // baixado depois (outro IP, outra hora). Reverte pro URL absoluto original
+    // nesses casos - na pior das hipoteses o comportamento volta a ser "preciso
+    // de internet pra essa imagem", que e' bem melhor que "quebrada pra sempre".
+    const failedAbsByLocal = new Map(results.filter((r) => !r.buf).map((r) => [r.local, r.absUrl]));
+    if (failedAbsByLocal.size > 0) {
+      const revertLocalRefs = (value) => {
+        let out = value;
+        for (const [local, abs] of failedAbsByLocal) out = out.split(local).join(abs);
+        return out;
+      };
+      $("[src]").each((_, el) => {
+        const v = $(el).attr("src");
+        if (v && failedAbsByLocal.has(v)) $(el).attr("src", failedAbsByLocal.get(v));
+      });
+      $("[srcset]").each((_, el) => {
+        const v = $(el).attr("srcset");
+        if (v) $(el).attr("srcset", revertLocalRefs(v));
+      });
+      $("[href]").each((_, el) => {
+        const v = $(el).attr("href");
+        if (v && failedAbsByLocal.has(v)) $(el).attr("href", failedAbsByLocal.get(v));
+      });
+      $("[poster]").each((_, el) => {
+        const v = $(el).attr("poster");
+        if (v && failedAbsByLocal.has(v)) $(el).attr("poster", failedAbsByLocal.get(v));
+      });
+      $("style").each((_, el) => {
+        const text = $(el).html();
+        if (text) $(el).html(revertLocalRefs(text));
+      });
+      $("[style]").each((_, el) => {
+        const v = $(el).attr("style");
+        if (v) $(el).attr("style", revertLocalRefs(v));
+      });
+    }
 
     // Busca tambem os chunks carregados sob demanda (nao aparecem no HTML,
     // so referenciados em texto dentro dos JS ja baixados). Isso vale
