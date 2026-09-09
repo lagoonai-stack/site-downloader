@@ -19,6 +19,9 @@ const ALLOWED_EMAILS = [
   "[email removido]",
   "[email removido]",
   "[email removido]",
+  "[email removido]",
+  "[email removido]",
+  "[email removido]",
 ];
 
 export async function requireBraboSpaceUser(req, res, next) {
