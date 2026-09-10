@@ -55,6 +55,12 @@ const TAILWIND_ARBITRARY_RE = /\.(?:bg|text|border|w|h|p|m|gap|rounded|shadow|fl
 // nomeado pela palavra mais frequente entre os seletores que ele define.
 // So olha pra parte de SELETOR de cada regra (nunca o corpo/valores) -
 // senao uma cor tipo "color:#fff" vira palavra-chave por engano.
+//
+// O <link> que substitui cada <style> fica exatamente no MESMO LUGAR do
+// original (replaceWith, nao remove+insere-no-fim) - a ordem relativa de
+// CSS importa pra cascata (duas regras com mesma especificidade, a que
+// vem depois vence), entao mover tudo pro fim do <head> pode inverter
+// qual regra "ganha".
 function extractStyles($) {
   const files = [];
   const used = new Set();
@@ -83,8 +89,9 @@ function extractStyles($) {
       name = pickName(words, used, "estilos");
     }
 
-    files.push({ name: `assets/css/${name}.css`, content: text, inHead: $(el).parents("head").length > 0 });
-    $(el).remove();
+    const fileName = `assets/css/${name}.css`;
+    files.push({ name: fileName, content: text });
+    $(el).replaceWith(`<!-- css --><link rel="stylesheet" href="${fileName}"/>`);
   });
   return files;
 }
@@ -92,6 +99,15 @@ function extractStyles($) {
 // Retira todo <script> inline com codigo de verdade (ignora ld+json e
 // scripts triviais de uma linha), agrupa por arquivo JS nomeado pelos
 // identificadores (ids/seletores/nomes de funcao) mais frequentes nele.
+//
+// Mesma logica do extractStyles: substitui no MESMO LUGAR (replaceWith),
+// nunca move pro fim do documento. Scripts rodam na ordem em que aparecem
+// no HTML - sites que fazem streaming de dados via varios <script> em
+// sequencia (Next.js App Router faz isso: cada <script> chama
+// self.__next_f.push(...) pra ir montando a resposta aos poucos) quebram
+// por completo se a ordem mudar, mesmo sem nenhum erro de rede - o
+// primeiro chunk depois de fora de ordem falha com um erro tipo
+// "enqueueModel is not a function" e a pagina inteira fica em branco.
 function extractScripts($) {
   const files = [];
   const used = new Set();
@@ -115,8 +131,9 @@ function extractScripts($) {
     for (const m of trimmed.matchAll(/\bfunction\s+([a-zA-Z_$][\w$]*)/g)) words.push(...splitWords(m[1]));
     for (const m of trimmed.matchAll(/\bconst\s+([a-zA-Z_$][\w$]*)\s*=/g)) words.push(...splitWords(m[1]));
     const name = pickName(words, used, "interactions");
-    files.push({ name: `assets/js/${name}.js`, content: trimmed, inHead: $el.parents("head").length > 0 });
-    $el.remove();
+    const fileName = `assets/js/${name}.js`;
+    files.push({ name: fileName, content: trimmed });
+    $el.replaceWith(`<!-- js --><script src="${fileName}"></script>`);
   });
   return files;
 }
@@ -274,16 +291,6 @@ export function buildDesignSystem($) {
   const inlineScriptText = jsFiles.map((f) => f.content).join("\n");
   const svgFiles = classifySvgs(d$, inlineScriptText);
   annotateSections(d$);
-
-  const head = d$("head");
-  for (const f of cssFiles) {
-    head.append(`<!-- css -->\n<link rel="stylesheet" href="${f.name}"/>\n`);
-  }
-  for (const f of jsFiles) {
-    const tag = `<!-- js -->\n<script src="${f.name}"></script>\n`;
-    if (f.inHead) head.append(tag);
-    else d$("body").append(tag);
-  }
 
   const stackMd = detectStack(d$, cssFiles, jsFiles);
   const files = [

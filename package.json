@@ -18,7 +18,8 @@
     "express": "^4.21.1",
     "express-rate-limit": "^8.6.1",
     "helmet": "^8.3.0",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0"
   },
   "optionalDependencies": {
     "puppeteer": "^23.6.0"

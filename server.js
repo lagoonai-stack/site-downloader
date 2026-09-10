@@ -4,6 +4,9 @@ import helmet from "helmet";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import archiver from "archiver";
+import multer from "multer";
+import rateLimit from "express-rate-limit";
+import { PassThrough } from "stream";
 import { fileURLToPath } from "url";
 import path from "path";
 import { promises as fsp } from "fs";
@@ -13,6 +16,9 @@ import { build as esbuildBuild } from "esbuild";
 import kiwifyWebhook from "./kiwifyWebhook.js";
 import { requireBraboSpaceUser } from "./requireBraboSpaceUser.js";
 import { buildDesignSystem, IMAGE_EXT_RE } from "./designSystemBuilder.js";
+import { createJob, getJob, cancelJob, finishJob, CancelError } from "./activeJobs.js";
+import { saveDownloadHistory, listDownloadHistory, getDownloadHistorySignedUrl, deleteDownloadHistoryEntry } from "./downloadHistory.js";
+import { saveErrorReport } from "./errorReports.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -65,27 +71,38 @@ function logError(label, err, context = {}) {
 // Casa url(...) em CSS, com ou sem aspas.
 const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1?\s*\)/g;
 
-async function fetchBuffer(url) {
+async function fetchBuffer(url, signal) {
   try {
     const { data } = await axios.get(url, {
       responseType: "arraybuffer",
       timeout: 20000,
       maxRedirects: 5,
       headers: { "User-Agent": UA },
+      signal,
     });
     return Buffer.from(data);
-  } catch {
+  } catch (err) {
+    // Cancelamento (usuario clicou "cancelar") nao e uma falha de rede -
+    // se engolir e devolver null igual aos outros erros, o /download acha
+    // que TODOS os assets falharam em vez de perceber que foi cancelado.
+    // Normaliza pro CancelError proprio (em vez de relancar o erro cru do
+    // axios) pra quem chama so precisar checar "instanceof CancelError",
+    // sem se preocupar com a forma exata do erro de cancelamento do axios.
+    if (axios.isCancel(err) || err.code === "ERR_CANCELED") throw new CancelError();
     return null;
   }
 }
 
-async function getHtml(url, useSpa) {
+async function getHtml(url, useSpa, ctx = {}) {
+  if (ctx.signal?.aborted) throw new CancelError();
   if (useSpa) {
+    ctx.onProgress?.("carregando-pagina", 10, "Abrindo o navegador");
     const puppeteer = (await import("puppeteer")).default;
     const browser = await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+    ctx.setBrowser?.(browser);
     const page = await browser.newPage();
     // Import() dinamico disparado em runtime (lazy-loading real) nao
     // aparece como <script>/<link modulepreload> no HTML final - a unica
@@ -104,6 +121,7 @@ async function getHtml(url, useSpa) {
     await page
       .goto(url, { waitUntil: "networkidle2", timeout: 30000 })
       .catch((err) => console.warn("Aviso: goto nao atingiu networkidle2:", err.message));
+    if (ctx.signal?.aborted) throw new CancelError();
 
     // Alguns construtores de site (Aura, etc.) sao so um "wrapper": a
     // pagina principal e so a ferramenta do construtor, e o site de
@@ -114,7 +132,7 @@ async function getHtml(url, useSpa) {
     // rastreamento, mapa incorporado, etc.) que quase todo site tem.
     let targetFrame = page.mainFrame();
     const frameDeadline = Date.now() + 20000;
-    while (Date.now() < frameDeadline) {
+    while (Date.now() < frameDeadline && !ctx.signal?.aborted) {
       const child = page.frames().find((f) => f.url() === "about:srcdoc");
       if (child) {
         targetFrame = child;
@@ -122,8 +140,50 @@ async function getHtml(url, useSpa) {
       }
       await new Promise((r) => setTimeout(r, 1000));
     }
+    if (ctx.signal?.aborted) throw new CancelError();
+    ctx.onProgress?.("carregando-pagina", 20, "Pagina carregada, aguardando conteudo");
 
     await new Promise((r) => setTimeout(r, 1500));
+
+    // Templates mais "premium" (com intro/loading screen antes do conteudo
+    // de verdade aparecer) as vezes levam bem mais que alguns segundos pra
+    // liberar o resto da pagina - vimos um caso que so tira o loader depois
+    // de quase 20s. Com a espera fixa antiga, a gente capturava o HTML no
+    // meio da intro: nem faltava recurso nem dava erro, so ficava com o
+    // loader/gradiente de fundo e o conteudo real (texto, imagens) travado
+    // em opacity:0 por uma classe tipo "loading" no <body> que a propria
+    // pagina so remove depois que a intro termina. Detecta esse padrao
+    // (classe de loading no html/body, ou um elemento #loader/.preloader
+    // ainda visivel) e so segue em frente quando ele sumir - sites sem esse
+    // padrao passam direto, sem custo extra.
+    const preloaderDeadline = Date.now() + 40000;
+    while (Date.now() < preloaderDeadline && !ctx.signal?.aborted) {
+      const stillLoading = await targetFrame
+        .evaluate(() => {
+          const classes = `${document.body?.className || ""} ${document.documentElement?.className || ""}`;
+          if (/\b(loading|preload|is-loading)\b/i.test(classes)) return true;
+          const el = document.querySelector(
+            '#loader, .loader, #preloader, .preloader, [class*="loader" i], [class*="preload" i]'
+          );
+          if (!el) return false;
+          const cs = getComputedStyle(el);
+          return cs.display !== "none" && cs.visibility !== "hidden" && Number(cs.opacity) > 0.05;
+        })
+        .catch(() => false);
+      if (!stillLoading) break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    if (ctx.signal?.aborted) throw new CancelError();
+    ctx.onProgress?.("carregando-pagina", 28, "Conteudo pronto, preparando captura");
+
+    // Tentativa anterior aqui era rolar em varios passos pequenos (em vez
+    // de um pulo unico) pra dar tempo de IntersectionObservers disparar em
+    // secoes com carregamento preguicoso. Revertido: quebrou uma cena de
+    // fundo animado (Unicorn Studio) que dependia do scroll acontecer de
+    // um jeito especifico - e nem teria ajudado o caso que motivou a
+    // mudanca, ja que aquele site teve o proprio Puppeteer pulado (o HTML
+    // estatico dele ja tem texto suficiente pra `detectNeedsSpa` decidir
+    // que nao precisa de navegador de verdade).
     await targetFrame.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
     await new Promise((r) => setTimeout(r, 1500));
 
@@ -150,7 +210,17 @@ async function getHtml(url, useSpa) {
       })
       .catch(() => {});
 
-    const html = await targetFrame.content();
+    let html;
+    try {
+      html = await targetFrame.content();
+    } catch (err) {
+      // Fechar o browser (cancelamento) derruba qualquer chamada pendente
+      // no frame - se foi isso, sinaliza cancelado em vez de deixar o erro
+      // criptico do Puppeteer ("Session closed", etc.) subir como se fosse
+      // uma falha de verdade.
+      if (ctx.signal?.aborted) throw new CancelError();
+      throw err;
+    }
 
     // So as requisicoes feitas pelo frame que a gente de fato usou. Sem
     // isso, quando o site e um "wrapper com iframe" (Aura), o zip vinha
@@ -171,14 +241,22 @@ async function getHtml(url, useSpa) {
       )
     );
 
-    await browser.close();
+    await browser.close().catch(() => {});
     return { html, requestedUrls };
   }
-  const { data } = await axios.get(url, {
-    timeout: 20000,
-    maxRedirects: 5,
-    headers: { "User-Agent": UA },
-  });
+  ctx.onProgress?.("carregando-pagina", 20, "Buscando HTML");
+  let data;
+  try {
+    ({ data } = await axios.get(url, {
+      timeout: 20000,
+      maxRedirects: 5,
+      headers: { "User-Agent": UA },
+      signal: ctx.signal,
+    }));
+  } catch (err) {
+    if (axios.isCancel(err) || err.code === "ERR_CANCELED") throw new CancelError();
+    throw err;
+  }
   return { html: data, requestedUrls: [] };
 }
 
@@ -198,7 +276,20 @@ function sanitizeFileName(name) {
 // estrutura que a maioria das ferramentas de download de site usa
 // (index.html + assets/). "folder" so serve mais pra decidir a
 // extensao padrao quando o nome do arquivo original nao tem uma.
-function localName(resUrl, folder, seen) {
+//
+// urlCache: varios sites repetem a MESMA URL absoluta em lugares
+// diferentes do HTML (ex: <img src="X" srcset="X 1x, Y 2x">, onde X
+// aparece tanto no src quanto como primeiro candidato do srcset). Sem
+// memoizar por URL, cada chamada gera um nome novo (X vira "_2" na
+// primeira vez e "_3" na segunda, ja que "seen" so sabe quais NOMES
+// DE ARQUIVO ja foram usados, nao quais URLs). O HTML fica com src e
+// srcset apontando pra nomes DIFERENTES do mesmo arquivo - e como so um
+// dos dois sobrevive (o crawlJsImports/crawlCssUrls dedupam por URL
+// depois, descartando a outra copia "fantasma"), o outro fica
+// permanentemente quebrado. Memoizando por URL, a segunda chamada pra
+// mesma URL reaproveita o nome ja escolhido em vez de inventar outro.
+function localName(resUrl, folder, seen, urlCache) {
+  if (urlCache?.has(resUrl)) return urlCache.get(resUrl);
   let name = path.basename(new URL(resUrl).pathname) || "index";
   name = sanitizeFileName(name.split("?")[0].split("#")[0] || "file");
   if (!path.extname(name)) name += folder === "css" ? ".css" : folder === "js" ? ".js" : "";
@@ -209,6 +300,7 @@ function localName(resUrl, folder, seen) {
     final = `assets/${path.basename(name, ext)}_${i++}${ext}`;
   }
   seen.add(final);
+  urlCache?.set(resUrl, final);
   return final;
 }
 
@@ -219,7 +311,7 @@ function localName(resUrl, folder, seen) {
 // que o Puppeteer faz). Aqui a gente varre o texto de cada JS ja
 // baixado atras desses imports e busca os arquivos direto, recursivamente,
 // pra nao depender de "visitar" cada tela do site pra descobrir os chunks.
-async function crawlJsImports(initialResults, seen) {
+async function crawlJsImports(initialResults, seen, urlCache, signal) {
   const known = new Map();
   for (const r of initialResults) known.set(r.absUrl, r);
 
@@ -264,12 +356,12 @@ async function crawlJsImports(initialResults, seen) {
       }
       if (known.has(resolvedAbs)) continue;
 
-      const buf = await fetchBuffer(resolvedAbs);
+      const buf = await fetchBuffer(resolvedAbs, signal);
       known.set(resolvedAbs, { absUrl: resolvedAbs, local: null, buf });
       if (!buf) continue;
 
       const folder = resolvedAbs.endsWith(".css") ? "css" : "js";
-      const local = localName(resolvedAbs, folder, seen);
+      const local = localName(resolvedAbs, folder, seen, urlCache);
       known.set(resolvedAbs, { absUrl: resolvedAbs, local, buf });
       queue.push(resolvedAbs);
     }
@@ -284,7 +376,7 @@ async function crawlJsImports(initialResults, seen) {
 // referencias porque elas vivem dentro do texto do CSS, nao em atributo
 // de tag. Baixa o que falta e reescreve o CSS pra apontar pro arquivo
 // local (relativo, ja que tudo vive junto em assets/).
-async function crawlCssUrls(results, seen) {
+async function crawlCssUrls(results, seen, urlCache, signal) {
   const known = new Map();
   for (const r of results) known.set(r.absUrl, r);
 
@@ -304,11 +396,11 @@ async function crawlCssUrls(results, seen) {
       }
       if (known.has(abs)) continue;
 
-      const buf = await fetchBuffer(abs);
+      const buf = await fetchBuffer(abs, signal);
       known.set(abs, { absUrl: abs, local: null, buf });
       if (!buf) continue;
 
-      const local = localName(abs, "img", seen);
+      const local = localName(abs, "img", seen, urlCache);
       known.set(abs, { absUrl: abs, local, buf });
     }
 
@@ -442,15 +534,17 @@ function looksLikeEmptyShell(html) {
   return hasModuleScript && text.length < 200;
 }
 
-async function detectNeedsSpa(target) {
+async function detectNeedsSpa(target, signal) {
   try {
     const { data } = await axios.get(target, {
       timeout: 15000,
       maxRedirects: 5,
       headers: { "User-Agent": UA },
+      signal,
     });
     return looksLikeEmptyShell(data);
-  } catch {
+  } catch (err) {
+    if (axios.isCancel(err) || err.code === "ERR_CANCELED") throw new CancelError();
     // se nem a busca simples funcionar, tenta o caminho mais robusto
     return true;
   }
@@ -461,12 +555,36 @@ async function detectNeedsSpa(target) {
 // locais) junto com os buffers baixados. Usado pelo /download nos tres
 // modos (site/design-system/both) - mesmo no modo "so design system" a
 // extracao depende do CSS final, entao a coleta roda igual.
-async function buildSiteAssets(target) {
+// Marcadores especificos das paginas que o Cloudflare mostra no lugar do
+// site de verdade quando o visitante (no nosso caso, o Puppeteer/axios
+// rodando de um IP de datacenter) e classificado como suspeito. Sem essa
+// checagem, o zip sai "funcionando" mas cheio so dessa tela - o usuario
+// so descobre abrindo o arquivo (e pior: pedacos de URL da pagina de
+// bloqueio podem parecer jobs de imagem quebrados, mascarando a causa
+// real). Duas variantes distintas, cada uma com seus proprios marcadores
+// especificos pra nao dar falso positivo em site nenhum de verdade:
+//   - desafio JS/Turnstile ("verificando seu navegador")
+//   - pagina de bloqueio do WAF ("Attention Required!")
+function isCloudflareChallenge(html) {
+  const isJsChallenge = html.includes("cdn-cgi/challenge-platform") && html.includes("challenges.cloudflare.com");
+  const isWafBlock = html.includes("cf-error-details") && /Attention Required/i.test(html);
+  return isJsChallenge || isWafBlock;
+}
+
+async function buildSiteAssets(target, ctx = {}) {
   const base = new URL(target);
-  const useSpa = await detectNeedsSpa(target);
-  const { html, requestedUrls } = await getHtml(target, useSpa);
+  ctx.onProgress?.("detectando", 5, "Verificando o site");
+  const useSpa = await detectNeedsSpa(target, ctx.signal);
+  const { html, requestedUrls } = await getHtml(target, useSpa, ctx);
+  if (isCloudflareChallenge(html)) {
+    throw new Error(
+      "Este site esta protegido por verificacao anti-bot (Cloudflare) e bloqueou o acesso pra download. Nao ha como contornar isso de forma automatica."
+    );
+  }
   const $ = cheerio.load(html);
   const seen = new Set();
+  // Memoiza local name por URL absoluta - ver comentario em localName().
+  const urlToLocal = new Map();
   const jobs = [];
   const moduleEntries = [];
   const modulePreloadChunks = [];
@@ -482,7 +600,7 @@ async function buildSiteAssets(target) {
       const href = $(el).attr("href");
       if (!href) return;
       const abs = new URL(href, base).href;
-      const local = localName(abs, "css", seen);
+      const local = localName(abs, "css", seen, urlToLocal);
       jobs.push({ absUrl: abs, local });
       $(el).attr("href", local);
       dropCrossOrigin(el);
@@ -502,7 +620,7 @@ async function buildSiteAssets(target) {
         } catch {
           return full;
         }
-        const local = localName(abs, "img", seen);
+        const local = localName(abs, "img", seen, urlToLocal);
         jobs.push({ absUrl: abs, local });
         return `url(${local})`;
       });
@@ -521,7 +639,7 @@ async function buildSiteAssets(target) {
       const src = $(el).attr("src");
       if (!src) return;
       const abs = new URL(src, base).href;
-      const local = localName(abs, "js", seen);
+      const local = localName(abs, "js", seen, urlToLocal);
       jobs.push({ absUrl: abs, local });
       $(el).attr("src", local);
       dropCrossOrigin(el);
@@ -536,7 +654,7 @@ async function buildSiteAssets(target) {
       const href = $(el).attr("href");
       if (!href) return;
       const abs = new URL(href, base).href;
-      const local = localName(abs, "js", seen);
+      const local = localName(abs, "js", seen, urlToLocal);
       jobs.push({ absUrl: abs, local });
       $(el).attr("href", local);
       dropCrossOrigin(el);
@@ -550,15 +668,24 @@ async function buildSiteAssets(target) {
       const src = $(el).attr("src");
       if (src && !src.startsWith("data:")) {
         const abs = new URL(src, base).href;
-        const local = localName(abs, "img", seen);
+        const local = localName(abs, "img", seen, urlToLocal);
         jobs.push({ absUrl: abs, local });
         $(el).attr("src", local);
       }
 
       const srcset = $(el).attr("srcset");
       if (srcset) {
+        // Vírgula seguida de espaço separa candidatos ("url 1x, url 2x") -
+        // mas varios CDNs/plugins (resize=300,200 do WordPress, transforms
+        // do Cloudflare Image Resizing etc.) usam virgula SEM espaço DENTRO
+        // da propria URL (largura,altura). Um split ingenuo em toda virgula
+        // corta essas URLs ao meio, e o pedaço depois da virgula (ex:
+        // "200 300w") vira um "job" de imagem fantasma (resolve pra um URL
+        // que nao existe, tipo dominio.com/200) - a imagem de verdade nunca
+        // e baixada. So separa em virgula+espaco, que e como todo gerador
+        // de srcset de verdade escreve os separadores.
         const rewritten = srcset
-          .split(",")
+          .split(/,\s+/)
           .map((part) => {
             const trimmed = part.trim();
             const spaceIdx = trimmed.search(/\s/);
@@ -566,7 +693,7 @@ async function buildSiteAssets(target) {
             const descriptor = spaceIdx === -1 ? "" : trimmed.slice(spaceIdx);
             if (!url || url.startsWith("data:")) return trimmed;
             const abs = new URL(url, base).href;
-            const local = localName(abs, "img", seen);
+            const local = localName(abs, "img", seen, urlToLocal);
             jobs.push({ absUrl: abs, local });
             return `${local}${descriptor}`;
           })
@@ -580,7 +707,7 @@ async function buildSiteAssets(target) {
       const src = $(el).attr("src");
       if (!src || src.startsWith("data:")) return;
       const abs = new URL(src, base).href;
-      const local = localName(abs, "img", seen);
+      const local = localName(abs, "img", seen, urlToLocal);
       jobs.push({ absUrl: abs, local });
       $(el).attr("src", local);
     });
@@ -588,7 +715,7 @@ async function buildSiteAssets(target) {
       const poster = $(el).attr("poster");
       if (!poster || poster.startsWith("data:")) return;
       const abs = new URL(poster, base).href;
-      const local = localName(abs, "img", seen);
+      const local = localName(abs, "img", seen, urlToLocal);
       jobs.push({ absUrl: abs, local });
       $(el).attr("poster", local);
     });
@@ -617,14 +744,27 @@ async function buildSiteAssets(target) {
         : IMAGE_EXT_RE.test(u.pathname)
         ? "img"
         : "js";
-      const local = localName(u.href, folder, seen);
+      const local = localName(u.href, folder, seen, urlToLocal);
       jobs.push({ absUrl: u.href, local });
       knownAbs.add(u.href);
     }
 
-    // Baixa todos os recursos em paralelo
+    // Baixa todos os recursos em paralelo. E a parte mais demorada e mais
+    // variavel (de poucos arquivos a centenas) - reportar X/Y concluidos e
+    // o que da o grosso da precisao real da barra de progresso.
+    ctx.onProgress?.("baixando-assets", 30, `0/${jobs.length} arquivos`);
+    let assetsDone = 0;
     let results = await Promise.all(
-      jobs.map(async (j) => ({ ...j, buf: await fetchBuffer(j.absUrl) }))
+      jobs.map(async (j) => {
+        const buf = await fetchBuffer(j.absUrl, ctx.signal);
+        assetsDone++;
+        ctx.onProgress?.(
+          "baixando-assets",
+          30 + Math.round((50 * assetsDone) / Math.max(1, jobs.length)),
+          `${assetsDone}/${jobs.length} arquivos`
+        );
+        return { ...j, buf };
+      })
     );
 
     // Quando o download de um recurso falha (CDN de terceiros bloqueando
@@ -676,17 +816,20 @@ async function buildSiteAssets(target) {
     // com texto suficiente no HTML puro (Framer, por exemplo, pre-
     // renderiza pro SEO) e mesmo assim ter <script type="module"> que
     // precisa ser empacotado pra funcionar offline.
+    ctx.onProgress?.("buscando-dependencias", 82, "Verificando dependencias de JS/CSS");
     try {
-      results = await crawlJsImports(results, seen);
+      results = await crawlJsImports(results, seen, urlToLocal, ctx.signal);
     } catch (err) {
+      if (err instanceof CancelError) throw err;
       logError("crawlJsImports", err, { url: target });
     }
 
     // Mesma logica pra CSS: imagem de fundo, fonte @font-face etc.
     // referenciadas via url(...) dentro do arquivo .css baixado.
     try {
-      results = await crawlCssUrls(results, seen);
+      results = await crawlCssUrls(results, seen, urlToLocal, ctx.signal);
     } catch (err) {
+      if (err instanceof CancelError) throw err;
       logError("crawlCssUrls", err, { url: target });
     }
 
@@ -709,20 +852,66 @@ async function buildSiteAssets(target) {
 //                      assets/css|js novos, sem duplicar nada).
 const DOWNLOAD_MODES = new Set(["site", "design-system", "both"]);
 
+// Envia o zip pro cliente (zip.pipe(res)) e, ao MESMO TEMPO, coleta os
+// mesmos bytes num buffer completo - sem isso, so daria pra escolher entre
+// "streamar rapido pro usuario" OU "guardar o arquivo inteiro pro
+// historico", nao os dois. pipe() do Node aceita varios destinos do mesmo
+// readable, entao os dois acontecem em paralelo sem atrasar a resposta.
+function pipeZipAndCapture(zip, res) {
+  const chunks = [];
+  const capture = new PassThrough();
+  capture.on("data", (chunk) => chunks.push(chunk));
+  const captured = new Promise((resolve, reject) => {
+    capture.on("end", () => resolve(Buffer.concat(chunks)));
+    capture.on("error", reject);
+  });
+  zip.pipe(res);
+  zip.pipe(capture);
+  return captured;
+}
+
+function isCancelLike(err) {
+  return err instanceof CancelError || axios.isCancel(err) || err?.code === "ERR_CANCELED";
+}
+
 app.get("/download", async (req, res) => {
   const target = req.query.url;
   if (!target) return res.status(400).send("Falta o parametro ?url=");
 
   const mode = DOWNLOAD_MODES.has(req.query.mode) ? req.query.mode : "site";
+  // Opcional: se o cliente mandar, ativa acompanhamento de progresso
+  // (GET /download/progress/:requestId) e cancelamento
+  // (POST /download/cancel/:requestId) pra esse download especifico. Sem
+  // ele, o comportamento e identico ao de sempre (compatibilidade com
+  // quem ainda chama /download sem essa param).
+  const requestId = typeof req.query.requestId === "string" ? req.query.requestId : null;
+  const job = requestId ? createJob(requestId) : { signal: undefined, onProgress: () => {}, setBrowser: () => {} };
+  const ctx = {
+    signal: job.signal,
+    onProgress: (stage, percent, message) => {
+      job.stage = stage;
+      job.percent = percent;
+      job.message = message;
+    },
+    setBrowser: (browser) => {
+      job.browser = browser;
+    },
+  };
 
   try {
     new URL(target);
   } catch {
+    if (requestId) finishJob(requestId, "error");
     return res.status(400).send("URL invalida");
   }
 
+  let historyStatus = "error";
+  let historyBuffer = null;
+  let historyFileName = null;
+  let historyErrorMessage = null;
+
   try {
-    const { $, base, results: collected, moduleEntries, modulePreloadChunks } = await buildSiteAssets(target);
+    const { $, base, results: collected, moduleEntries, modulePreloadChunks } = await buildSiteAssets(target, ctx);
     let results = collected;
     const hostname = base.hostname.replace(/[^a-z0-9.-]/gi, "_");
 
@@ -736,24 +925,34 @@ app.get("/download", async (req, res) => {
     // ja devolve o zip so com o design-system.html + os mesmos assets do
     // site (imagens/fontes/libs continuam locais, so nao ha index.html).
     if (mode === "design-system") {
+      historyFileName = `${hostname}-design-system.zip`;
       res.setHeader("Content-Type", "application/zip");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${hostname}-design-system.zip"`
-      );
+      res.setHeader("Content-Disposition", `attachment; filename="${historyFileName}"`);
       const zip = archiver("zip", { zlib: { level: 9 } });
       zip.on("error", (err) => {
         logError("zip-stream", err, { url: target, mode });
         res.status(500).end(String(err));
       });
-      zip.pipe(res);
+      const captured = pipeZipAndCapture(zip, res);
       zip.append(designSystem.html, { name: "design-system.html" });
       for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
       for (const r of results) {
         if (r.buf) zip.append(r.buf, { name: r.local });
       }
       zip.append(designSystem.stackMd, { name: "STACK.md" });
+      ctx.onProgress("compactando", 95, "Gerando arquivo zip");
       await zip.finalize();
+      historyBuffer = await captured;
+      historyStatus = "success";
+      if (requestId) finishJob(requestId, "done");
+      saveDownloadHistory({
+        userEmail: req.userEmail,
+        url: target,
+        mode,
+        status: historyStatus,
+        buffer: historyBuffer,
+        fileName: historyFileName,
+      }).catch((err) => logError("download-history", err, { url: target, mode }));
       return;
     }
 
@@ -765,6 +964,7 @@ app.get("/download", async (req, res) => {
     // original modular - o site continua baixavel, so precisa de um
     // servidor local pra abrir.
     if (moduleEntries.length > 0) {
+      ctx.onProgress("empacotando", 90, "Empacotando modulos JS");
       try {
         results = await bundleModuleEntries({ $, moduleEntries, modulePreloadChunks, results });
       } catch (err) {
@@ -773,18 +973,16 @@ app.get("/download", async (req, res) => {
     }
 
     // Monta o ZIP ("site" ou "both")
+    historyFileName = `${hostname}.zip`;
     res.setHeader("Content-Type", "application/zip");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${hostname}.zip"`
-    );
+    res.setHeader("Content-Disposition", `attachment; filename="${historyFileName}"`);
 
     const zip = archiver("zip", { zlib: { level: 9 } });
     zip.on("error", (err) => {
       logError("zip-stream", err, { url: target, mode });
       res.status(500).end(String(err));
     });
-    zip.pipe(res);
+    const captured = pipeZipAndCapture(zip, res);
 
     zip.append($.html(), { name: "index.html" });
     for (const r of results) {
@@ -797,10 +995,138 @@ app.get("/download", async (req, res) => {
       for (const f of designSystem.files) zip.append(f.buf, { name: f.name });
       zip.append(designSystem.stackMd, { name: "STACK.md" });
     }
+    ctx.onProgress("compactando", 95, "Gerando arquivo zip");
     await zip.finalize();
+    historyBuffer = await captured;
+    historyStatus = "success";
+    if (requestId) finishJob(requestId, "done");
+    saveDownloadHistory({
+      userEmail: req.userEmail,
+      url: target,
+      mode,
+      status: historyStatus,
+      buffer: historyBuffer,
+      fileName: historyFileName,
+    }).catch((err) => logError("download-history", err, { url: target, mode }));
   } catch (err) {
-    logError("download", err, { url: target, mode });
-    res.status(500).send("Erro ao baixar: " + err.message);
+    const canceled = isCancelLike(err);
+    historyStatus = canceled ? "canceled" : "error";
+    historyErrorMessage = err.message;
+    if (requestId) finishJob(requestId, historyStatus);
+    if (!canceled) logError("download", err, { url: target, mode });
+    if (!res.headersSent) {
+      res
+        .status(canceled ? 499 : 500)
+        .send(canceled ? "Download cancelado." : "Erro ao baixar: " + err.message);
+    } else {
+      res.end();
+    }
+    saveDownloadHistory({
+      userEmail: req.userEmail,
+      url: target,
+      mode,
+      status: historyStatus,
+      errorMessage: historyErrorMessage,
+    }).catch((e) => logError("download-history", e, { url: target, mode }));
+  }
+});
+
+// Progresso do download identificado por requestId (poll simples em vez de
+// SSE - mais robusto atras do proxy Traefik/Dokploy, e uma barra de
+// progresso nao precisa de atualizacao sub-segundo).
+app.get("/download/progress/:requestId", (req, res) => {
+  const job = getJob(req.params.requestId);
+  if (!job) return res.status(404).json({ error: "Job nao encontrado (ja concluido ou nunca existiu)." });
+  res.json({ stage: job.stage, percent: job.percent, message: job.message, status: job.status });
+});
+
+app.post("/download/cancel/:requestId", (req, res) => {
+  const ok = cancelJob(req.params.requestId);
+  if (!ok) return res.status(404).json({ error: "Job nao encontrado (ja concluido ou nunca existiu)." });
+  res.json({ ok: true });
+});
+
+app.get("/downloads/history", async (req, res) => {
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+  const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+  try {
+    const items = await listDownloadHistory({ userEmail: req.userEmail, limit, offset });
+    res.json({ items, limit, offset });
+  } catch (err) {
+    logError("list-download-history", err, { userEmail: req.userEmail });
+    res.status(500).json({ error: "Erro ao buscar historico." });
+  }
+});
+
+app.get("/downloads/history/:id/file", async (req, res) => {
+  try {
+    const result = await getDownloadHistorySignedUrl({ userEmail: req.userEmail, id: req.params.id });
+    if (!result) return res.status(404).json({ error: "Registro nao encontrado." });
+    res.json(result);
+  } catch (err) {
+    logError("get-download-history-file", err, { userEmail: req.userEmail, id: req.params.id });
+    res.status(500).json({ error: "Erro ao gerar link de download." });
+  }
+});
+
+app.delete("/downloads/history/:id", async (req, res) => {
+  try {
+    const ok = await deleteDownloadHistoryEntry({ userEmail: req.userEmail, id: req.params.id });
+    if (!ok) return res.status(404).json({ error: "Registro nao encontrado." });
+    res.json({ ok: true });
+  } catch (err) {
+    logError("delete-download-history", err, { userEmail: req.userEmail, id: req.params.id });
+    res.status(500).json({ error: "Erro ao apagar registro." });
+  }
+});
+
+// Multipart em memoria (nunca grava em disco - o buffer sobe direto pro
+// Storage) so' na rota de report, com limite de tamanho e so aceitando
+// imagem no campo de print.
+const reportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) return cb(new Error("Só imagens são aceitas no print."));
+    cb(null, true);
+  },
+});
+const reportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Muitos reports em pouco tempo - tente novamente mais tarde." },
+});
+
+app.post("/report-error", reportLimiter, (req, res, next) => {
+  reportUpload.single("screenshot")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
+  const { url, description } = req.body;
+  if (!url || !description) {
+    return res.status(400).json({ error: "url e description sao obrigatorios." });
+  }
+  try {
+    new URL(url);
+  } catch {
+    return res.status(400).json({ error: "URL invalida." });
+  }
+
+  try {
+    const id = await saveErrorReport({
+      userEmail: req.userEmail,
+      url,
+      description,
+      screenshotBuffer: req.file?.buffer ?? null,
+      screenshotMime: req.file?.mimetype ?? null,
+    });
+    res.json({ ok: true, id });
+  } catch (err) {
+    logError("report-error", err, { url });
+    res.status(500).json({ error: "Erro ao salvar o report." });
   }
 });
 

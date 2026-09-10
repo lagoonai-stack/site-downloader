@@ -14,9 +14,11 @@ falar com o projeto Supabase *da BraboSpace* (não o próprio):
 - `BRABOSPACE_SUPABASE_URL` → Project URL do projeto Supabase da brabo-academy
 - `BRABOSPACE_SUPABASE_ANON_KEY` → chave `anon` (pública) desse mesmo projeto
 
-Além do token válido, o e-mail do usuário precisa estar na lista `ALLOWED_EMAILS` em
-`requireBraboSpaceUser.js` — mantenha essa lista em sincronia com
-`src/lib/downloaderAccess.ts` no repo da brabo-academy.
+Além do token válido, o e-mail do usuário precisa estar na variável `ALLOWED_EMAILS` do
+`.env` (lista separada por vírgula, sem espaços — ver seção 3) — mantenha essa lista em
+sincronia com `src/lib/downloaderAccess.ts` no repo da brabo-academy. **Não** volte a colocar
+essa lista direto no código-fonte: este repo é público no GitHub, e são e-mails pessoais de
+gente de verdade.
 
 ## 2. Supabase deste app (Kiwify)
 
@@ -41,6 +43,7 @@ NODE_ENV=production
 
 BRABOSPACE_SUPABASE_URL=          # Project URL do Supabase da brabo-academy
 BRABOSPACE_SUPABASE_ANON_KEY=     # chave anon (pública) do Supabase da brabo-academy
+ALLOWED_EMAILS=                   # e-mails com acesso, separados por virgula (sem espaco)
 
 SUPABASE_URL=                     # Project URL deste app (Kiwify)
 SUPABASE_SERVICE_ROLE_KEY=        # service_role key deste app (Kiwify)
@@ -79,3 +82,36 @@ from private.kiwify_webhook_logs
 order by received_at desc
 limit 50;
 ```
+
+## 7. Histórico de downloads e report de erros (Storage)
+
+Além das tabelas (já incluídas em `supabase-schema.sql` — rode de novo no SQL Editor se seu
+projeto já existia antes dessa seção), essas duas features guardam arquivo no Supabase
+Storage **do projeto próprio deste app** (`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`, mesmo
+projeto do Kiwify — não o da BraboSpace). Crie os dois buckets manualmente:
+
+1. No dashboard do Supabase → **Storage** → **New bucket**:
+   - `download-history` — **privado** (não marcar "Public bucket"). Guarda o zip de cada
+     download bem-sucedido, pra permitir re-download sem raspar o site de novo.
+   - `error-reports` — **privado**. Guarda o print (screenshot) anexado a um report de erro,
+     quando houver.
+2. Nenhuma policy de RLS extra é necessária nesses buckets — todo acesso (upload, download,
+   signed URL, delete) passa pelo backend usando a `service_role` key, que ignora RLS.
+
+Não há limpeza automática desses arquivos — com o tempo, o bucket `download-history`
+tende a crescer bastante (cada download bem-sucedido gera um zip novo). Vale considerar,
+mais pra frente, uma rotina (cron/Edge Function) que apague entradas de histórico com mais
+de N dias — não construída nesta rodada por não ter sido pedida.
+
+Reports de erro não têm painel de admin — pra revisar, rode no SQL Editor:
+
+```sql
+select id, user_email, url, description, screenshot_path, created_at
+from private.error_reports
+order by created_at desc
+limit 50;
+```
+
+Ver `API.md` para o contrato completo dos endpoints novos (progresso/cancelamento de
+download, histórico, report de erro) — é o que quem for integrar o front do `brabo-academy`
+vai precisar.

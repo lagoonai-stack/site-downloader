@@ -7,3 +7,9 @@ node_modules/
 # (thumbs/, previews/, catalog.json) e commitado.
 /galeria_arquivo/
 /brabo_design_system/
+
+# Docs internos pra quem for mexer no front (brabo-academy) - repo e
+# publico, entao ficam so localmente/no Artifact compartilhado direto com
+# o time, nunca no historico do git.
+/API.md
+/FRONTEND_HANDOFF.md
