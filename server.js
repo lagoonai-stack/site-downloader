@@ -311,60 +311,83 @@ function localName(resUrl, folder, seen, urlCache) {
 // que o Puppeteer faz). Aqui a gente varre o texto de cada JS ja
 // baixado atras desses imports e busca os arquivos direto, recursivamente,
 // pra nao depender de "visitar" cada tela do site pra descobrir os chunks.
+// Varre em "ondas": todos os arquivos do nivel atual sao lidos (rapido, so
+// texto) pra achar specs novos, e TODOS os specs novos descobertos nessa
+// onda sao baixados em paralelo de uma vez, antes de passar pra proxima
+// onda. Um site com bundler moderno (Vite, Next.js) costuma ter uma arvore
+// de chunks LARGA (uma pagina que importa 50-300 chunks de uma vez) e RASA
+// (poucos niveis de profundidade) - baixar um de cada vez em serie, esperando
+// a resposta de cada requisicao (ate 20s de timeout) antes de pedir a
+// proxima, faz uma pagina pesada facilmente passar de 1-2 minutos so nessa
+// etapa (visto na pratica com chatgpt.com - mais de 100s so aqui, batendo
+// no timeout de proxy tipo Cloudflare antes do download terminar).
 async function crawlJsImports(initialResults, seen, urlCache, signal) {
   const known = new Map();
   for (const r of initialResults) known.set(r.absUrl, r);
 
-  const queue = initialResults
+  let currentLevel = initialResults
     .filter((r) => r.buf && /\.m?js$/i.test(r.local))
     .map((r) => r.absUrl);
 
-  while (queue.length > 0) {
-    const abs = queue.shift();
-    const entry = known.get(abs);
-    if (!entry?.buf) continue;
+  while (currentLevel.length > 0) {
+    const toFetch = new Set();
+    for (const abs of currentLevel) {
+      const entry = known.get(abs);
+      if (!entry?.buf) continue;
 
-    const text = entry.buf.toString("utf8");
-    const specs = new Set();
-    // Especificador relativo ("./x.js"), absoluto de raiz ("/assets/x.js"),
-    // ou "nu" tipo "assets/x.js" - esse ultimo e como o Vite guarda seu
-    // mapa interno de dependencias de chunk (nao e uma chamada import()
-    // de verdade, e um array de strings com o nome de todo mundo).
-    for (const m of text.matchAll(/import\(\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.m?js)["'`]\s*\)/g)) {
-      specs.add(m[1]);
-    }
-    for (const m of text.matchAll(/\bfrom\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.m?js)["'`]/g)) {
-      specs.add(m[1]);
-    }
-    for (const m of text.matchAll(/["'`](assets\/[^"'`]+?\.(?:m?js|css))["'`]/g)) {
-      specs.add(m[1]);
-    }
-    // require()/import() de uma URL absoluta de OUTRO dominio (comum em
-    // sites feitos com Framer, que puxa chunks compartilhados do proprio
-    // CDN dele em runtime). Guardamos a URL como veio (ja e absoluta).
-    for (const m of text.matchAll(/(?:require|import)\(\s*["'`](https?:\/\/[^"'`]+?\.m?js)["'`]\s*\)/g)) {
-      specs.add(m[1]);
+      const text = entry.buf.toString("utf8");
+      const specs = new Set();
+      // Especificador relativo ("./x.js"), absoluto de raiz ("/assets/x.js"),
+      // ou "nu" tipo "assets/x.js" - esse ultimo e como o Vite guarda seu
+      // mapa interno de dependencias de chunk (nao e uma chamada import()
+      // de verdade, e um array de strings com o nome de todo mundo).
+      for (const m of text.matchAll(/import\(\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.m?js)["'`]\s*\)/g)) {
+        specs.add(m[1]);
+      }
+      for (const m of text.matchAll(/\bfrom\s*["'`]((?:\.{1,2}\/|\/)[^"'`]+?\.m?js)["'`]/g)) {
+        specs.add(m[1]);
+      }
+      for (const m of text.matchAll(/["'`](assets\/[^"'`]+?\.(?:m?js|css))["'`]/g)) {
+        specs.add(m[1]);
+      }
+      // require()/import() de uma URL absoluta de OUTRO dominio (comum em
+      // sites feitos com Framer, que puxa chunks compartilhados do proprio
+      // CDN dele em runtime). Guardamos a URL como veio (ja e absoluta).
+      for (const m of text.matchAll(/(?:require|import)\(\s*["'`](https?:\/\/[^"'`]+?\.m?js)["'`]\s*\)/g)) {
+        specs.add(m[1]);
+      }
+
+      for (const spec of specs) {
+        let resolvedAbs;
+        try {
+          const normalized = /^https?:\/\//.test(spec) || /^\.{0,2}\//.test(spec) ? spec : `/${spec}`;
+          resolvedAbs = new URL(normalized, abs).href;
+        } catch {
+          continue;
+        }
+        if (known.has(resolvedAbs) || toFetch.has(resolvedAbs)) continue;
+        toFetch.add(resolvedAbs);
+      }
     }
 
-    for (const spec of specs) {
-      let resolvedAbs;
-      try {
-        const normalized = /^https?:\/\//.test(spec) || /^\.{0,2}\//.test(spec) ? spec : `/${spec}`;
-        resolvedAbs = new URL(normalized, abs).href;
-      } catch {
+    if (toFetch.size === 0) break;
+
+    const fetched = await Promise.all(
+      Array.from(toFetch).map(async (resolvedAbs) => ({ resolvedAbs, buf: await fetchBuffer(resolvedAbs, signal) }))
+    );
+
+    const nextLevel = [];
+    for (const { resolvedAbs, buf } of fetched) {
+      if (!buf) {
+        known.set(resolvedAbs, { absUrl: resolvedAbs, local: null, buf: null });
         continue;
       }
-      if (known.has(resolvedAbs)) continue;
-
-      const buf = await fetchBuffer(resolvedAbs, signal);
-      known.set(resolvedAbs, { absUrl: resolvedAbs, local: null, buf });
-      if (!buf) continue;
-
       const folder = resolvedAbs.endsWith(".css") ? "css" : "js";
       const local = localName(resolvedAbs, folder, seen, urlCache);
       known.set(resolvedAbs, { absUrl: resolvedAbs, local, buf });
-      queue.push(resolvedAbs);
+      nextLevel.push(resolvedAbs);
     }
+    currentLevel = nextLevel;
   }
 
   return Array.from(known.values()).filter((r) => r.local);
@@ -376,12 +399,19 @@ async function crawlJsImports(initialResults, seen, urlCache, signal) {
 // referencias porque elas vivem dentro do texto do CSS, nao em atributo
 // de tag. Baixa o que falta e reescreve o CSS pra apontar pro arquivo
 // local (relativo, ja que tudo vive junto em assets/).
+//
+// Primeiro so COLETA todas as URLs referenciadas em todos os CSS baixados
+// (rapido, so texto) e busca todas elas de uma vez em paralelo - so depois
+// reescreve o texto de cada arquivo. Mesma razao do crawlJsImports: uma
+// folha de estilo com muitas fontes/imagens de fundo nao pode esperar cada
+// download terminar antes de pedir o proximo.
 async function crawlCssUrls(results, seen, urlCache, signal) {
   const known = new Map();
   for (const r of results) known.set(r.absUrl, r);
 
   const cssTargets = results.filter((r) => r.buf && r.local.endsWith(".css"));
 
+  const toFetch = new Set();
   for (const cssResult of cssTargets) {
     const refs = [...cssResult.buf.toString("utf8").matchAll(CSS_URL_RE)]
       .map((m) => m[2].trim())
@@ -394,16 +424,24 @@ async function crawlCssUrls(results, seen, urlCache, signal) {
       } catch {
         continue;
       }
-      if (known.has(abs)) continue;
+      if (known.has(abs) || toFetch.has(abs)) continue;
+      toFetch.add(abs);
+    }
+  }
 
+  await Promise.all(
+    Array.from(toFetch).map(async (abs) => {
       const buf = await fetchBuffer(abs, signal);
-      known.set(abs, { absUrl: abs, local: null, buf });
-      if (!buf) continue;
-
+      if (!buf) {
+        known.set(abs, { absUrl: abs, local: null, buf: null });
+        return;
+      }
       const local = localName(abs, "img", seen, urlCache);
       known.set(abs, { absUrl: abs, local, buf });
-    }
+    })
+  );
 
+  for (const cssResult of cssTargets) {
     const text = cssResult.buf.toString("utf8").replace(CSS_URL_RE, (full, _quote, raw) => {
       const trimmed = raw.trim();
       if (!trimmed || trimmed.startsWith("data:") || trimmed.startsWith("#")) return full;
